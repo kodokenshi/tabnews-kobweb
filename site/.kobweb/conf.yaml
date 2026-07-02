@@ -1,0 +1,14 @@
+site:
+  title: "tabnews-kobweb"
+
+server:
+  files:
+    dev:
+      contentRoot: "build/processedResources/js/main/public"
+      script: "build/kotlin-webpack/js/developmentExecutable/tabnewskobweb.js"
+      api: "build/libs/tabnewskobweb.jar"
+    prod:
+      script: "build/kotlin-webpack/js/productionExecutable/tabnewskobweb.js"
+      siteRoot: ".kobweb/site"
+
+  port: 8080
