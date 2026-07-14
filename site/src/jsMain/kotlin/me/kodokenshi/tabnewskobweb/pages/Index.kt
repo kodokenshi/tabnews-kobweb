@@ -7,5 +7,6 @@ import org.jetbrains.compose.web.dom.Text
 @Page
 @Composable
 fun HomePage() {
-	Text(":)")
+	Text("Em construção")
 }
+ 
