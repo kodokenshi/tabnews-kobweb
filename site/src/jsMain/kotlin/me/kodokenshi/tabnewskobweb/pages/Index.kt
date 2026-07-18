@@ -9,4 +9,3 @@ import org.jetbrains.compose.web.dom.Text
 fun HomePage() {
 	Text("Em construção")
 }
- 

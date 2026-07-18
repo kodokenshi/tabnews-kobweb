@@ -19,14 +19,33 @@ kobweb {
 }
 
 kotlin {
+	
+	js {
+		browser {
+			testTask {
+				useKarma {
+					useChromeHeadless()
+				}
+			}
+		}
+		nodejs {
+			testTask {
+				
+			}
+		}
+	}
+	
 	// This example is frontend only. However, for a fullstack app, you can uncomment the includeServer parameter
 	// and the `jvmMain` source set below.
-	configAsKobwebApplication("tabnewskobweb" /*, includeServer = true*/)
+	configAsKobwebApplication("tabnewskobweb", includeServer = true)
 	
 	sourceSets {
-		//        commonMain.dependencies {
-		//          // Add shared dependencies between JS and JVM here if building a fullstack app
-		//        }
+		
+		commonMain.dependencies {
+			implementation(kotlin("test"))
+			implementation("io.ktor:ktor-client-core:3.5.0")
+			implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+		}
 		
 		jsMain.dependencies {
 			implementation(libs.compose.runtime)
@@ -37,14 +56,13 @@ kotlin {
 			// Uncomment the following if you want access to a large set of font-awesome icons:
 			// implementation(libs.silk.icons.fa)
 			implementation(libs.kobwebx.markdown)
-		}
-		jvmTest.dependencies {
-			implementation("io.mockk:mockk:1.14.11")
+			implementation("io.ktor:ktor-client-js:3.5.0")
 		}
 		
-		// Uncomment the following if you pass `includeServer = true` into the `configAsKobwebApplication` call.
-		//        jvmMain.dependencies {
-		//            compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime
-		//        }
+		jvmMain.dependencies {
+			compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime
+			implementation("io.ktor:ktor-client-cio:3.5.0")
+		}
+		
 	}
 }
