@@ -42,12 +42,16 @@ kotlin {
 	sourceSets {
 		
 		commonMain.dependencies {
+			
 			implementation(kotlin("test"))
 			implementation("io.ktor:ktor-client-core:3.5.0")
 			implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+			implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+			
 		}
 		
 		jsMain.dependencies {
+			
 			implementation(libs.compose.runtime)
 			implementation(libs.compose.html.core)
 			implementation(libs.kobweb.core)
@@ -57,11 +61,21 @@ kotlin {
 			// implementation(libs.silk.icons.fa)
 			implementation(libs.kobwebx.markdown)
 			implementation("io.ktor:ktor-client-js:3.5.0")
+			
 		}
 		
 		jvmMain.dependencies {
+			
 			compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime
 			implementation("io.ktor:ktor-client-cio:3.5.0")
+			
+			implementation("org.jetbrains.exposed:exposed-core:1.3.1")
+			implementation("org.jetbrains.exposed:exposed-dao:1.3.1")
+			implementation("org.jetbrains.exposed:exposed-jdbc:1.3.1")
+			
+			implementation("org.postgresql:postgresql:42.7.13")
+			implementation("com.zaxxer:HikariCP:7.1.0")
+			
 		}
 		
 	}

@@ -1,8 +1,8 @@
 package me.kodokenshi.tabnewskobweb.tests
 
+import io.ktor.client.*
+import io.ktor.client.request.*
 import kotlinx.coroutines.test.runTest
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 
 fun test(name: String, op: Test.() -> Unit) = op(Test(name))
 fun runTest(name: String, op: suspend Test.() -> Unit) = runTest { op(Test(name)) }
@@ -18,23 +18,37 @@ class Test(private val name: String) {
 		
 	}
 	
+	suspend fun fetch(url: String) = HttpClient().use { it.get(url) }
+	
 	fun <T> expect(block: () -> T) = Assertion(block())
 	fun <T> expect(value: T) = Assertion(value)
 	
 	inner class Assertion<T>(private val actual: T) {
 		
-		fun toBe(expected: T, message: String? = "O valor obtido não é o esperado!") {
-			assertEquals(expected, actual, fail())
+		fun toBe(expected: T) {
+			
+			if (actual != expected) {
+				
+				fail(expected)
+				throw AssertionError()
+				
+			}
+			
 			ok()
+			
 		}
 		
-		fun toNotBe(expected: T) {
-			assertNotEquals(expected, actual, fail())
-			ok()
+		private fun fail(expected: T) {
+			println(
+				"""
+				$FAIL[FAIL]: $TEXT$name
+				$FAIL   >    ${RESET}Expected: $OK$expected
+				$FAIL   >    ${RESET}Actual  : $FAIL$actual
+			""".trimIndent()
+			)
 		}
 		
-		private fun fail() = "$FAIL[FAIL]: $TEXT$name$RESET"
-		private fun ok() = println("$OK[ OK ]: $TEXT$name")
+		private fun ok() = println("$OK[PASS]: $TEXT$name")
 		
 	}
 	
