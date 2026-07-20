@@ -81,3 +81,35 @@ kotlin {
 		
 	}
 }
+tasks.register<Exec>("servicesStop") {
+	
+	description = "Pausa temporariamente os serviços secundários"
+	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "stop")
+	
+}
+tasks.register<Exec>("servicesDown") {
+	
+	description = "Derruba os serviços secundários"
+	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "down")
+	
+}
+tasks.register<Exec>("servicesUp") {
+	
+	description = "Sobe os serviços secundários"
+	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "up", "-d")
+	
+}
+tasks.named("kobwebStart") { mustRunAfter("servicesUp") }
+tasks.register("startDev") {
+	
+	description = "Inicia os serviços e o servidor"
+	dependsOn("servicesUp", "kobwebStart")
+	
+}
+tasks.register("stopDev") {
+	
+	description = "Derruba o servidor e os serviços"
+	dependsOn("servicesDown", "kobwebStop")
+	
+}
+
