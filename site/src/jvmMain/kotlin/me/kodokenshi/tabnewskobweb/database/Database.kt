@@ -9,6 +9,7 @@ object Database {
 	private val env by lazy {
 		dotenv {
 			directory = "../"
+			filename = ".env.development"
 			ignoreIfMissing = true
 		}
 	}

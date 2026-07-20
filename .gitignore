@@ -27,4 +27,3 @@ kotlin-js-store
 
 # Kotlin ignores
 .kotlin
-.env

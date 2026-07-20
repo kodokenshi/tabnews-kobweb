@@ -38,7 +38,7 @@ class Test(private val name: String) {
 			
 		}
 		
-		private fun fail(expected: T) {
+		private fun fail(expected: T) =
 			println(
 				"""
 				$FAIL[FAIL]: $TEXT$name
@@ -46,7 +46,6 @@ class Test(private val name: String) {
 				$FAIL   >    ${RESET}Actual  : $FAIL$actual
 			""".trimIndent()
 			)
-		}
 		
 		private fun ok() = println("$OK[PASS]: $TEXT$name")
 		
