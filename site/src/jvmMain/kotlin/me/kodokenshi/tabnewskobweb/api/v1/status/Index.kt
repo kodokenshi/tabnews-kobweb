@@ -32,12 +32,15 @@ suspend fun status(ctx: ApiContext) {
 			)
 		
 	} catch (t: Throwable) {
-	
-		ctx.res.body =
-			bodyOf(
-				"Error: ${t.message}\n\nStackTrace:\n${t.stackTraceToString()}"
-			)
+		
+		val msg = "Error: ${t.message}\nStackTrace:\n${t.stackTraceToString()}"
+		
+		ctx.res.body = bodyOf(msg)
 		ctx.res.status = 500
+		
+		t.printStackTrace()
+		
+		throw t
 		
 	}
 	
