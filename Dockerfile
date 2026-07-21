@@ -20,14 +20,14 @@ RUN ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
 # 2. Etapa de Execução (Imagem final leve)
 FROM eclipse-temurin:25-jre
 
-WORKDIR /app
+WORKDIR /app/site
 
-# Copia os arquivos estáticos e o jar do servidor a partir dos caminhos corretos do Kobweb
-COPY --from=builder /app/site/.kobweb/site/system ./site/system
-COPY --from=builder /app/site/.kobweb/server ./site/server
+# Copia a estrutura de artefatos preservando o diretório .kobweb
+COPY --from=builder /app/site/.kobweb/site/system ./.kobweb/site/system
+COPY --from=builder /app/site/.kobweb/server ./.kobweb/server
 
 ENV PORT=8080
 EXPOSE 8080
 
-# Executa o servidor JVM do Kobweb
-CMD ["java", "-jar", "site/server/server.jar", "--env", "prod", "--port", "8080"]
+# Executa o servidor direto a partir da pasta /app/site
+CMD ["java", "-jar", ".kobweb/server/server.jar", "--env", "prod", "--port", "8080"]
