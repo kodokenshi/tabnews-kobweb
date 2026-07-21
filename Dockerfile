@@ -3,10 +3,19 @@ FROM eclipse-temurin:25-jdk AS builder
 
 WORKDIR /app
 
-# Instala ferramentas necessárias para o script do Kobweb
-RUN apt-get update && apt-get install -y curl unzip zip && rm -rf /var/lib/apt/lists/*
+# Instala ferramentas essenciais LOGO NO INÍCIO
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copia os arquivos do Gradle para aproveitar o cache
+# Baixa e extrai o Kobweb CLI diretamente
+ENV KOBWEB_VERSION=0.9.21
+RUN curl -sSL -O "https://github.com/varabyte/kobweb-cli/releases/download/v${KOBWEB_VERSION}/kobweb-${KOBWEB_VERSION}.zip" \
+    && unzip "kobweb-${KOBWEB_VERSION}.zip" -d /opt/kobweb \
+    && rm "kobweb-${KOBWEB_VERSION}.zip"
+
+# Copia a estrutura do projeto
 COPY gradlew .
 COPY gradle gradle
 COPY site/build.gradle.kts .
@@ -16,22 +25,16 @@ COPY site site
 # Dá permissão de execução ao Gradle
 RUN chmod +x gradlew
 
-# Baixa e extrai a versão oficial do Kobweb CLI diretamente do GitHub Releases
-ENV KOBWEB_VERSION=0.9.21
-RUN wget https://github.com/varabyte/kobweb-cli/releases/download/v${KOBWEB_VERSION}/kobweb-${KOBWEB_VERSION}.zip \
-    && unzip kobweb-${KOBWEB_VERSION}.zip -d /opt/kobweb \
-    && rm kobweb-${KOBWEB_VERSION}.zip
-
-# Adiciona o Kobweb ao PATH e executa o export
+# Adiciona o Kobweb CLI ao PATH e exporta a aplicação Fullstack
 ENV PATH="/opt/kobweb/kobweb-${KOBWEB_VERSION}/bin:${PATH}"
 RUN kobweb export --layout fullstack
 
-# 2. Etapa de Execução (Imagem leve)
+# 2. Etapa de Execução (Imagem final leve)
 FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-# Copia os artefatos compilados
+# Copia os arquivos compilados da etapa de build
 COPY --from=builder /app/site/.kobweb/site/system ./site/system
 COPY --from=builder /app/site/.kobweb/site/server ./site/server
 
