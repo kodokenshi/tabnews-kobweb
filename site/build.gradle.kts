@@ -28,11 +28,6 @@ kotlin {
 				}
 			}
 		}
-		nodejs {
-			testTask {
-				
-			}
-		}
 	}
 	
 	// This example is frontend only. However, for a fullstack app, you can uncomment the includeServer parameter
@@ -97,13 +92,6 @@ tasks.register<Exec>("servicesUp") {
 	
 	description = "Sobe os serviços secundários"
 	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "up", "-d")
-	
-}
-tasks.named("kobwebStart") { mustRunAfter("servicesUp") }
-tasks.register("startDev") {
-	
-	description = "Inicia os serviços e o servidor"
-	dependsOn("servicesUp", "kobwebStart")
 	
 }
 tasks.register("stopDev") {

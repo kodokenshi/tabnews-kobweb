@@ -1,8 +1,11 @@
 package me.kodokenshi.tabnewskobweb.database
 
 import io.github.cdimascio.dotenv.dotenv
+import org.jetbrains.exposed.v1.core.IColumnType
+import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import java.sql.ResultSet
 
 object Database {
 	
@@ -25,11 +28,23 @@ object Database {
 		)
 	}
 	
-	fun query(sql: String) =
+	fun version() = database.fullVersion
+	fun maxConnections() = query("show max_connections") { if (it.next()) it.getInt(1) else 0 }
+	fun openedConnections() =
+		query(
+			"select count(*)::int from pg_stat_activity where datname = ?",
+			listOf(
+				VarCharColumnType() to env.get("POSTGRES_DB")
+			)
+		) { if (it.next()) it.getInt(1) else 0 }
+	
+	private fun <T> query(
+		sql: String,
+		args: Iterable<Pair<IColumnType<*>, Any?>> = emptyList(),
+		exec: (ResultSet) -> T,
+	) =
 		transaction(database) {
-			exec(sql) {
-				if (it.next()) it.getObject(1) else null
-			}
+			exec(sql, args, transform = exec)
 		}
 	
 }

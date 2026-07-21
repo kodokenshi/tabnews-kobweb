@@ -3,18 +3,29 @@ package me.kodokenshi.tabnewskobweb.api.v1.status
 import com.varabyte.kobweb.api.Api
 import com.varabyte.kobweb.api.ApiContext
 import com.varabyte.kobweb.api.http.bodyOf
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import me.kodokenshi.tabnewskobweb.database.Database
+import me.kodokenshi.tabnewskobweb.json.buildJson
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @Api("/v1/status")
 suspend fun status(ctx: ApiContext) {
 	
+	val updatedAt = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString()
+	val databaseVersion = Database.version()
+	val databaseMaxConnections = Database.maxConnections()
+	val databaseOpenedConnections = Database.openedConnections()
+	
 	ctx.res.body =
 		bodyOf(
-			buildJsonObject {
-				put("chave", Database.query("select 1 + 1;").toString())
-			}.toString(),
+			buildJson {
+				put("updated_at", updatedAt)
+				putNested("dependencies.database") {
+					put("version", databaseVersion)
+					put("max_connections", databaseMaxConnections)
+					put("opened_connections", databaseOpenedConnections)
+				}
+			},
 			"application/json"
 		)
 	

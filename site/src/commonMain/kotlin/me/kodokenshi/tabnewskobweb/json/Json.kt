@@ -1,0 +1,92 @@
+package me.kodokenshi.tabnewskobweb.json
+
+import kotlinx.serialization.json.*
+
+fun json(op: Json.() -> Unit) = Json().apply(op)
+fun buildJson(op: Json.() -> Unit) = json(op).toString()
+
+class Json(
+	root: Map<String, JsonElement> = mapOf(),
+) {
+	
+	companion object {
+		
+		fun parse(map: Map<String, JsonElement>) = Json(map)
+		fun parse(string: String) = Json(kotlinx.serialization.json.Json.parseToJsonElement(string).jsonObject)
+		
+	}
+	
+	private val root = root.toMutableMap()
+	
+	//
+	private fun put(key: String, value: JsonElement) {
+		root[key] = value
+	}
+	
+	fun put(key: String, json: Json) = put(key, json.toObject())
+	fun put(key: String, json: Json.() -> Unit) = put(key, json(json).toObject())
+	fun put(key: String, value: String?) = put(key, JsonPrimitive(value))
+	fun put(key: String, value: Number?) = put(key, JsonPrimitive(value))
+	//
+	
+	//
+	fun putNested(key: String, value: JsonElement) {
+		
+		val path = key.split('.')
+		var currentMap = this.root
+		
+		path.forEachIndexed { index, segment ->
+			
+			if (index == path.lastIndex) currentMap[segment] = value
+			else {
+				
+				val nextElement = currentMap[segment]
+				val nextJsonObject =
+					if (nextElement is JsonObject) nextElement.toMutableMap()
+					else mutableMapOf()
+				
+				currentMap[segment] = JsonObject(nextJsonObject)
+				currentMap = nextJsonObject
+				
+			}
+			
+		}
+		
+	}
+	
+	fun putNested(key: String, json: Json) = putNested(key, json.toObject())
+	fun putNested(key: String, json: Json.() -> Unit) = putNested(key, json(json).toObject())
+	fun putNested(key: String, value: String?) = putNested(key, JsonPrimitive(value))
+	//
+	
+	//
+	private fun getElement(key: String) = root[key]
+	fun getString(key: String) = getElement(key)?.jsonPrimitive?.content
+	fun getJson(key: String): Json? = parse(getElement(key) as? JsonObject ?: return null)
+	//
+	
+	//
+	fun getNested(key: String): JsonElement? {
+		
+		val path = key.split('.')
+		var currentMap: Map<String, JsonElement> = root
+		
+		path.forEachIndexed { index, segment ->
+			
+			if (index == path.lastIndex) return currentMap[segment]
+			currentMap = (currentMap[segment] as? JsonObject) ?: return null
+			
+		}
+		
+		return null
+		
+	}
+	
+	fun getNestedString(key: String) = getNested(key)?.jsonPrimitive?.content
+	fun getNestedInt(key: String) = getNested(key)?.jsonPrimitive?.int
+	//
+	
+	private fun toObject() = JsonObject(root)
+	override fun toString() = toObject().toString()
+	
+}
