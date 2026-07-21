@@ -11,22 +11,34 @@ import java.time.temporal.ChronoUnit
 @Api("/v1/status")
 suspend fun status(ctx: ApiContext) {
 	
-	val updatedAt = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString()
-	val databaseVersion = Database.version()
-	val databaseMaxConnections = Database.maxConnections()
-	val databaseOpenedConnections = Database.openedConnections()
+	try {
+		
+		val updatedAt = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString()
+		val databaseVersion = Database.version()
+		val databaseMaxConnections = Database.maxConnections()
+		val databaseOpenedConnections = Database.openedConnections()
+		
+		ctx.res.body =
+			bodyOf(
+				buildJson {
+					put("updated_at", updatedAt)
+					putNested("dependencies.database") {
+						put("version", databaseVersion)
+						put("max_connections", databaseMaxConnections)
+						put("opened_connections", databaseOpenedConnections)
+					}
+				},
+				"application/json"
+			)
+		
+	} catch (t: Throwable) {
 	
-	ctx.res.body =
-		bodyOf(
-			buildJson {
-				put("updated_at", updatedAt)
-				putNested("dependencies.database") {
-					put("version", databaseVersion)
-					put("max_connections", databaseMaxConnections)
-					put("opened_connections", databaseOpenedConnections)
-				}
-			},
-			"application/json"
-		)
+		ctx.res.body =
+			bodyOf(
+				"Error: ${t.message}\n\nStackTrace:\n${t.stackTraceToString()}"
+			)
+		ctx.res.status = 500
+		
+	}
 	
 }
