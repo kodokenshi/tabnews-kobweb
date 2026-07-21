@@ -6,7 +6,7 @@ WORKDIR /app
 # Copia os arquivos do Gradle para aproveitar o cache
 COPY gradlew .
 COPY gradle gradle
-COPY build.gradle.kts .
+COPY site/build.gradle.kts .
 COPY settings.gradle.kts .
 COPY site site
 
