@@ -2,9 +2,9 @@
 FROM mcr.microsoft.com/playwright:v1.49.0-noble AS builder
 
 # Instala o Java 25 (ou OpenJDK) sobre a imagem que já tem o Chromium pronto
-RUN apt-get update && apt-get install -y openjdk-21-jdk && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openjdk-25-jdk && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /
 
 # Copia os arquivos do projeto
 COPY gradlew .
@@ -20,10 +20,10 @@ RUN ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
 # 2. Etapa de Execução (Imagem final super leve)
 FROM eclipse-temurin:25-jre
 
-WORKDIR /app
+WORKDIR /
 
-COPY --from=builder /app/site/.kobweb/site/system ./site/system
-COPY --from=builder /app/site/.kobweb/site/server ./site/server
+COPY --from=builder /site/.kobweb/site/system ./site/system
+COPY --from=builder /site/.kobweb/site/server ./site/server
 
 ENV PORT=8080
 EXPOSE 8080
