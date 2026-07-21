@@ -18,13 +18,15 @@ object Database {
 	}
 	private val database by lazy {
 		Database.connect(
-			url = env.get("POSTGRES_URL")
-				.replace("POSTGRES_HOST", env.get("POSTGRES_HOST"))
-				.replace("POSTGRES_PORT", env.get("POSTGRES_PORT"))
-				.replace("POSTGRES_DB", env.get("POSTGRES_DB")),
-			driver = env.get("POSTGRES_DRIVER"),
-			user = env.get("POSTGRES_USER"),
-			password = env.get("POSTGRES_PASSWORD")
+			url = env.get("POSTGRES_URL", "jdbc:postgresql://POSTGRES_HOST:POSTGRES_PORT/POSTGRES_DB")
+				.replace("POSTGRES_HOST", env.get("POSTGRES_HOST", "localhost"))
+				.replace("POSTGRES_PORT", env.get("POSTGRES_PORT", "5432"))
+				.replace("POSTGRES_DB", env.get("POSTGRES_DB", "local_db"))
+				.replace("POSTGRES_PASSWORD", env.get("POSTGRES_PASSWORD", "local_password"))
+				.replace("POSTGRES_USER", env.get("POSTGRES_USER", "local_user")),
+			driver = env.get("POSTGRES_DRIVER", "org.postgresql.Driver"),
+			user = env.get("POSTGRES_USER", "local_user"),
+			password = env.get("POSTGRES_PASSWORD", "local_password")
 		)
 	}
 	
