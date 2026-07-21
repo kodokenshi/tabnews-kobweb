@@ -38,7 +38,7 @@ suspend fun status(ctx: ApiContext) {
 		ctx.res.body = bodyOf(msg)
 		ctx.res.status = 500
 		
-		t.printStackTrace()
+		println(msg)
 		
 		throw t
 		
