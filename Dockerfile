@@ -1,10 +1,10 @@
-# 1. Etapa de Build: Usa a imagem oficial do Playwright (já vem com Chromium e dependências do Linux)
+# 1. Etapa de Build
 FROM mcr.microsoft.com/playwright:v1.49.0-noble AS builder
 
-# Instala o Java 25 (ou OpenJDK) sobre a imagem que já tem o Chromium pronto
+# Instala o JDK
 RUN apt-get update && apt-get install -y openjdk-25-jdk && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /
+WORKDIR /app
 
 # Copia os arquivos do projeto
 COPY gradlew .
@@ -14,18 +14,20 @@ COPY site site
 
 RUN chmod +x gradlew
 
-# Compila e exporta
+# Compila e exporta no modo FULLSTACK
 RUN ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
 
-# 2. Etapa de Execução (Imagem final super leve)
+# 2. Etapa de Execução (Imagem final leve)
 FROM eclipse-temurin:25-jre
 
-WORKDIR /
+WORKDIR /app
 
-COPY --from=builder /site/.kobweb/site/system ./site/system
-COPY --from=builder /site/.kobweb/site/server ./site/server
+# Copia os arquivos estáticos e o jar do servidor a partir dos caminhos corretos do Kobweb
+COPY --from=builder /app/site/.kobweb/site/system ./site/system
+COPY --from=builder /app/site/.kobweb/server ./site/server
 
 ENV PORT=8080
 EXPOSE 8080
 
+# Executa o servidor JVM do Kobweb
 CMD ["java", "-jar", "site/server/server.jar", "--env", "prod", "--port", "8080"]
