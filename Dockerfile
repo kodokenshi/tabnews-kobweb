@@ -3,17 +3,18 @@ FROM eclipse-temurin:25-jdk AS builder
 
 WORKDIR /app
 
-# Copia a estrutura do projeto
+# Copia os arquivos do Gradle Wrapper e as configurações da raiz
 COPY gradlew .
 COPY gradle gradle
-COPY site/build.gradle.kts .
 COPY settings.gradle.kts .
+
+# Copia o módulo 'site' inteiro (contém site/build.gradle.kts, site/.kobweb, site/src, etc.)
 COPY site site
 
-# Dá permissão de execução ao Gradle
+# Dá permissão de execução ao Gradle Wrapper
 RUN chmod +x gradlew
 
-# Compila e exporta a aplicação no layout fullstack direto pelo Gradle
+# Compila e exporta a aplicação no layout FULLSTACK
 RUN ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
 
 # 2. Etapa de Execução (Imagem final leve)
@@ -21,7 +22,7 @@ FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-# Copia os arquivos compilados gerados pelo Gradle
+# Copia os artefatos compilados
 COPY --from=builder /app/site/.kobweb/site/system ./site/system
 COPY --from=builder /app/site/.kobweb/site/server ./site/server
 
