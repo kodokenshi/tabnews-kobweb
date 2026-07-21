@@ -22,12 +22,13 @@ FROM eclipse-temurin:25-jre
 
 WORKDIR /app/site
 
-# Copia a estrutura de artefatos preservando o diretório .kobweb
+# Copia o arquivo de configuração conf.yaml e as pastas compiladas
+COPY --from=builder /app/site/.kobweb/conf.yaml ./.kobweb/conf.yaml
 COPY --from=builder /app/site/.kobweb/site/system ./.kobweb/site/system
 COPY --from=builder /app/site/.kobweb/server ./.kobweb/server
 
 ENV PORT=8080
 EXPOSE 8080
 
-# Executa o servidor direto a partir da pasta /app/site
+# Executa o servidor JVM do Kobweb
 CMD ["java", "-jar", ".kobweb/server/server.jar", "--env", "prod", "--port", "8080"]
