@@ -16,11 +16,14 @@ COPY site site
 # Dá permissão de execução ao Gradle
 RUN chmod +x gradlew
 
-# Instala a CLI do Kobweb (URL atualizada)
-RUN curl -sSL https://raw.githubusercontent.com/varabyte/kobweb/main/cli/install/install.sh | bash
+# Baixa e extrai a versão oficial do Kobweb CLI diretamente do GitHub Releases
+ENV KOBWEB_VERSION=0.9.21
+RUN wget https://github.com/varabyte/kobweb-cli/releases/download/v${KOBWEB_VERSION}/kobweb-${KOBWEB_VERSION}.zip \
+    && unzip kobweb-${KOBWEB_VERSION}.zip -d /opt/kobweb \
+    && rm kobweb-${KOBWEB_VERSION}.zip
 
-# Adiciona a CLI do Kobweb ao PATH e exporta a aplicação Fullstack
-ENV PATH="/root/.kobweb/bin:${PATH}"
+# Adiciona o Kobweb ao PATH e executa o export
+ENV PATH="/opt/kobweb/kobweb-${KOBWEB_VERSION}/bin:${PATH}"
 RUN kobweb export --layout fullstack
 
 # 2. Etapa de Execução (Imagem leve)
