@@ -1,28 +1,27 @@
-# 1. Etapa de Build (compila o projeto com Java 25)
-FROM eclipse-temurin:25-jdk AS builder
+# 1. Etapa de Build: Usa a imagem oficial do Playwright (já vem com Chromium e dependências do Linux)
+FROM mcr.microsoft.com/playwright:v1.49.0-noble AS builder
+
+# Instala o Java 25 (ou OpenJDK) sobre a imagem que já tem o Chromium pronto
+RUN apt-get update && apt-get install -y openjdk-21-jdk && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copia os arquivos do Gradle Wrapper e as configurações da raiz
+# Copia os arquivos do projeto
 COPY gradlew .
 COPY gradle gradle
 COPY settings.gradle.kts .
-
-# Copia o módulo 'site' inteiro (contém site/build.gradle.kts, site/.kobweb, site/src, etc.)
 COPY site site
 
-# Dá permissão de execução ao Gradle Wrapper
 RUN chmod +x gradlew
 
-# Compila e exporta a aplicação no layout FULLSTACK
+# Compila e exporta
 RUN ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
 
-# 2. Etapa de Execução (Imagem final leve)
+# 2. Etapa de Execução (Imagem final super leve)
 FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-# Copia os artefatos compilados
 COPY --from=builder /app/site/.kobweb/site/system ./site/system
 COPY --from=builder /app/site/.kobweb/site/server ./site/server
 
