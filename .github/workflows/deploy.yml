@@ -1,0 +1,35 @@
+name: Deploy Kobweb to Vercel
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'oracle'
+          java-version: '25'
+
+      - name: Dar permissão de execução ao Gradle Wrapper
+        run: chmod +x gradlew
+
+      - name: Compilar e Exportar o site Kobweb
+        run: ./gradlew kobwebExport --layout static
+
+      - name: Deploy para a Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: .kobweb/site/system
+          vercel-args: '--prod'
