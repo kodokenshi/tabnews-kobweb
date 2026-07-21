@@ -23,7 +23,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Compilar e Exportar o site Kobweb
-        run: ./gradlew kobwebExport --layout static
+        run: ./gradlew kobwebExport -Pkobweb.export.layout=STATIC
 
       - name: Deploy para a Vercel
         uses: amondnet/vercel-action@v25
