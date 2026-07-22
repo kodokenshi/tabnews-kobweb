@@ -10,7 +10,7 @@ import kotlin.time.Instant
 class GetTest {
 	
 	@Test
-	fun getApiStatus() = testContext("/api/v1/status", logPassedTests = true) {
+	fun getApiStatus() = testContext("/api/v1/status", logPassedTests = false) {
 		
 		val response = fetch("http://localhost:8080/api/v1/status")
 		val responseBody = Json.parse(response.bodyAsText())

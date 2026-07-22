@@ -13,6 +13,8 @@ class Json(
 		
 		fun parse(map: Map<String, JsonElement>) = Json(map)
 		fun parse(string: String) = Json(kotlinx.serialization.json.Json.parseToJsonElement(string).jsonObject)
+		fun parseArray(string: String) =
+			kotlinx.serialization.json.Json.parseToJsonElement(string).jsonArray.map { parse(it.toString()) }
 		
 	}
 	
