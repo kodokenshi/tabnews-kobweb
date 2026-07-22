@@ -24,6 +24,8 @@ object Database {
 				.replace("POSTGRES_DB", env.get("POSTGRES_DB", "local_db"))
 				.replace("POSTGRES_PASSWORD", env.get("POSTGRES_PASSWORD", "local_password"))
 				.replace("POSTGRES_USER", env.get("POSTGRES_USER", "local_user")),
+			user = env.get("POSTGRES_USER", "local_user"),
+			password = env.get("POSTGRES_PASSWORD", "local_password"),
 			driver = env.get("POSTGRES_DRIVER", "org.postgresql.Driver"),
 		)
 	}
