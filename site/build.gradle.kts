@@ -7,7 +7,6 @@ buildscript {
 	}
 	dependencies {
 		classpath("org.postgresql:postgresql:42.7.13")
-		classpath("org.flywaydb:flyway-database-postgresql:12.10.0")
 	}
 }
 
@@ -16,7 +15,6 @@ plugins {
 	alias(libs.plugins.compose.compiler)
 	alias(libs.plugins.kobweb.application)
 	alias(libs.plugins.kobwebx.markdown)
-	id("org.flywaydb.flyway") version "12.10.0"
 }
 
 fun getEnvVar(key: String, defaultValue: String = ""): String {
@@ -31,20 +29,6 @@ fun getEnvVar(key: String, defaultValue: String = ""): String {
 		
 	}
 	return System.getenv(key) ?: defaultValue
-	
-}
-
-flyway {
-	
-	url = getEnvVar("POSTGRES_URL", "jdbc:postgresql://POSTGRES_HOST:POSTGRES_PORT/POSTGRES_DB")
-		.replace("POSTGRES_HOST", getEnvVar("POSTGRES_HOST", "localhost"))
-		.replace("POSTGRES_PORT", getEnvVar("POSTGRES_PORT", "5432"))
-		.replace("POSTGRES_DB", getEnvVar("POSTGRES_DB", "local_db"))
-		.replace("POSTGRES_PASSWORD", getEnvVar("POSTGRES_PASSWORD", "local_password"))
-		.replace("POSTGRES_USER", getEnvVar("POSTGRES_USER", "local_user"))
-	user = getEnvVar("POSTGRES_USER", "local_user")
-	password = getEnvVar("POSTGRES_PASSWORD", "local_password")
-	locations = arrayOf("filesystem:${layout.settingsDirectory.asFile.absolutePath}/infra/migrations")
 	
 }
 
@@ -71,8 +55,6 @@ kotlin {
 		}
 	}
 	
-	// This example is frontend only. However, for a fullstack app, you can uncomment the includeServer parameter
-	// and the `jvmMain` source set below.
 	configAsKobwebApplication("tabnewskobweb", includeServer = true)
 	
 	sourceSets {
@@ -103,23 +85,29 @@ kotlin {
 		
 		jvmMain.dependencies {
 			
+			implementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+			
 			compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime
 			implementation("io.ktor:ktor-client-cio:3.5.0")
 			
-			implementation("org.jetbrains.exposed:exposed-core:1.3.1")
-			implementation("org.jetbrains.exposed:exposed-dao:1.3.1")
-			implementation("org.jetbrains.exposed:exposed-jdbc:1.3.1")
+			implementation("org.jetbrains.exposed:exposed-core:1.5.0")
+			implementation("org.jetbrains.exposed:exposed-dao:1.5.0")
+			implementation("org.jetbrains.exposed:exposed-jdbc:1.5.0")
+//			implementation("org.jetbrains.exposed:exposed-migration-core:1.5.0")
+//			implementation("org.jetbrains.exposed:exposed-migration-jdbc:1.5.0")
 			
 			implementation("org.postgresql:postgresql:42.7.13")
-			implementation("com.zaxxer:HikariCP:7.1.0")
-			
-			implementation("org.flywaydb:flyway-core:12.10.0")
-			implementation("org.flywaydb:flyway-database-postgresql:12.10.0")
+//			implementation("com.zaxxer:HikariCP:7.1.0")
 			
 		}
 		
 	}
 }
+
+tasks.withType<Test> {
+	useJUnitPlatform()
+}
+
 tasks.register<Exec>("servicesStop") {
 	
 	description = "Pausa temporariamente os serviços secundários"
@@ -145,7 +133,7 @@ tasks.register("stopDev") {
 	
 }
 
-tasks.register("flywayCreate") {
+tasks.register("migrationsCreate") { // ./gradlew migrationsCreate -Pname=""
 	
 	group = "database"
 	description = "Cria um novo arquivo de migração SQL com base no timestamp atual."

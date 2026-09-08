@@ -9,6 +9,20 @@ import java.sql.ResultSet
 
 object Database {
 	
+	val POSTGRES_URL get() = env.get("POSTGRES_URL", "jdbc:postgresql://POSTGRES_HOST:POSTGRES_PORT/POSTGRES_DB")
+		.replace("POSTGRES_HOST", POSTGRES_HOST)
+		.replace("POSTGRES_PORT", POSTGRES_PORT)
+		.replace("POSTGRES_DB", POSTGRES_DB)
+		.replace("POSTGRES_USER", POSTGRES_USER)
+		.replace("POSTGRES_PASSWORD", POSTGRES_PASSWORD)
+	
+	val POSTGRES_HOST: String get() = env.get("POSTGRES_HOST", "localhost")
+	val POSTGRES_PORT: String get() = env.get("POSTGRES_PORT", "5432")
+	val POSTGRES_DB: String get() = env.get("POSTGRES_DB", "local_db")
+	val POSTGRES_USER: String get() = env.get("POSTGRES_USER", "local_user")
+	val POSTGRES_PASSWORD: String get() = env.get("POSTGRES_PASSWORD", "local_password")
+	val POSTGRES_DRIVER: String get() = env.get("POSTGRES_DRIVER", "org.postgresql.Driver")
+	
 	private val env by lazy {
 		dotenv {
 			directory = "../"
@@ -16,17 +30,12 @@ object Database {
 			ignoreIfMissing = true
 		}
 	}
-	private val database by lazy {
+	val database by lazy {
 		Database.connect(
-			url = env.get("POSTGRES_URL", "jdbc:postgresql://POSTGRES_HOST:POSTGRES_PORT/POSTGRES_DB")
-				.replace("POSTGRES_HOST", env.get("POSTGRES_HOST", "localhost"))
-				.replace("POSTGRES_PORT", env.get("POSTGRES_PORT", "5432"))
-				.replace("POSTGRES_DB", env.get("POSTGRES_DB", "local_db"))
-				.replace("POSTGRES_PASSWORD", env.get("POSTGRES_PASSWORD", "local_password"))
-				.replace("POSTGRES_USER", env.get("POSTGRES_USER", "local_user")),
-			user = env.get("POSTGRES_USER", "local_user"),
-			password = env.get("POSTGRES_PASSWORD", "local_password"),
-			driver = env.get("POSTGRES_DRIVER", "org.postgresql.Driver"),
+			url = POSTGRES_URL,
+			user = POSTGRES_USER,
+			password = POSTGRES_PASSWORD,
+			driver = POSTGRES_DRIVER,
 		)
 	}
 	

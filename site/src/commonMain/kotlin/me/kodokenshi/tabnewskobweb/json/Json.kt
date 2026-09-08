@@ -12,9 +12,15 @@ class Json(
 	companion object {
 		
 		fun parse(map: Map<String, JsonElement>) = Json(map)
-		fun parse(string: String) = Json(kotlinx.serialization.json.Json.parseToJsonElement(string).jsonObject)
-		fun parseArray(string: String) =
-			kotlinx.serialization.json.Json.parseToJsonElement(string).jsonArray.map { parse(it.toString()) }
+		fun parse(string: String): Json? = try {
+			if (string.isBlank()) Json()
+			else Json(kotlinx.serialization.json.Json.parseToJsonElement(string).jsonObject)
+		} catch (_: Exception) { null }
+		fun parseList(string: String): List<Json>? = try {
+			kotlinx.serialization.json.Json.parseToJsonElement(string).jsonArray.map { parse(it.toString())!! }
+		} catch (_: Exception) {
+			null
+		}
 		
 	}
 	
