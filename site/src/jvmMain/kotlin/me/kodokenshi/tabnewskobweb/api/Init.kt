@@ -9,7 +9,7 @@ import me.kodokenshi.tabnewskobweb.database.migrations.Migrations
 @InitApi
 fun init(ctx: InitApiContext) {
 	
-	if (!ctx.env.isDev) return
+	if (!ctx.env.isDev || System.getenv("KOBWEB_BUILD_TYPE") == "prod") return
 	
 	var count = 1
 	println("🔴 Waiting Postgres accept new connections")

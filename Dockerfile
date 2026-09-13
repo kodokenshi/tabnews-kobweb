@@ -15,7 +15,7 @@ COPY site site
 RUN chmod +x gradlew
 
 # Compila e exporta no modo FULLSTACK
-RUN ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK -PkobwebEnv=PROD
+RUN export KOBWEB_BUILD_TYPE=prod && ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
 
 # 2. Etapa de Execução (Imagem final leve)
 FROM eclipse-temurin:25-jre
