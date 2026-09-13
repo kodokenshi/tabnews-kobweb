@@ -37,9 +37,6 @@ version = "1.0-SNAPSHOT"
 
 kobweb {
 	app {
-		index {
-			description.set("Powered by Kobweb")
-		}
 	}
 }
 
@@ -126,14 +123,19 @@ tasks.register<Exec>("servicesUp") {
 	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "up", "-d")
 	
 }
+tasks.register("runDev") {
+	
+	description = "Inicia os serviços e o servidor."
+	dependsOn("servicesUp", "kobwebStart")
+	
+}
 tasks.register("stopDev") {
 	
 	description = "Derruba o servidor e os serviços"
-	dependsOn("servicesDown", "kobwebStop")
+	dependsOn("kobwebStop", "servicesDown")
 	
 }
-
-tasks.register("migrationsCreate") { // ./gradlew migrationsCreate -Pname=""
+tasks.register("migration") { // ./gradlew migration -Pname=""
 	
 	group = "database"
 	description = "Cria um novo arquivo de migração SQL com base no timestamp atual."

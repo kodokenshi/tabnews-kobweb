@@ -2,8 +2,24 @@ package me.kodokenshi.tabnewskobweb.json
 
 import kotlinx.serialization.json.*
 
+fun errorJson(reason: String) = buildJson("error", reason)
+
 fun json(op: Json.() -> Unit) = Json().apply(op)
+fun json(vararg map: String) = Json().apply {
+	
+	val iterator = map.iterator()
+	while (iterator.hasNext()) {
+		
+		val key = iterator.next()
+		val value = if (iterator.hasNext()) iterator.next() else throw IndexOutOfBoundsException("Missing value for key $key.")
+		
+		put(key, value)
+		
+	}
+	
+}
 fun buildJson(op: Json.() -> Unit) = json(op).toString()
+fun buildJson(vararg map: String) = json(*map).toString()
 
 class Json(
 	root: Map<String, JsonElement> = mapOf(),

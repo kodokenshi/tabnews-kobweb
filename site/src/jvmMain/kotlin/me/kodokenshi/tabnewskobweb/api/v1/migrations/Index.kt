@@ -7,33 +7,31 @@ import com.varabyte.kobweb.api.http.bodyOf
 import io.ktor.http.*
 import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.database.migrations.Migrations
+import me.kodokenshi.tabnewskobweb.json.errorJson
 
 @Api("/v1/migrations")
-suspend fun status(ctx: ApiContext) {
+fun status(ctx: ApiContext) {
+	
+	if (ctx.req.method !in setOf(HttpMethod.GET, HttpMethod.POST)) {
+		ctx.res.body = bodyOf(errorJson("Method \"${ctx.req.method}\" not allowed"))
+		ctx.res.status = HttpStatusCode.MethodNotAllowed.value
+		return
+	}
+	
+	val isDryRun = ctx.req.method == HttpMethod.GET
 	
 	try {
-	
-		when (ctx.req.method) {
-			HttpMethod.GET -> {
-				
-				val migrations = migrations()
-				migrations.migrate(true)
-				
-				ctx.res.body = bodyOf(migrations.findPendingMigrations().map { it.toInfoJson() }.toString())
-				
-			}
-			HttpMethod.POST -> {
-				
-				val migrations = migrations()
-				migrations.migrate()
-				
-				val migratedMigrations = migrations.getMigratedMigrations()
-				
-				ctx.res.body = bodyOf(migratedMigrations.map { it.toInfoJson() }.toString())
-				if (migratedMigrations.isNotEmpty()) ctx.res.status = HttpStatusCode.Created.value
-				
-			}
-			else -> ctx.res.status = HttpStatusCode.MethodNotAllowed.value
+		
+		val migrations = migrations()
+		migrations.migrate(isDryRun)
+		
+		if (isDryRun) ctx.res.body = bodyOf(migrations.findPendingMigrations().map { it.toInfoJson() }.toString())
+		else {
+			
+			val migratedMigrations = migrations.getMigratedMigrations()
+			
+			ctx.res.body = bodyOf(migratedMigrations.map { it.toInfoJson() }.toString())
+			if (migratedMigrations.isNotEmpty()) ctx.res.status = HttpStatusCode.Created.value
 			
 		}
 		
