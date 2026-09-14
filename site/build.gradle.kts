@@ -17,12 +17,27 @@ buildscript {
 
 plugins {
   id("io.gitlab.arturbosch.detekt") version "1.23.8"
+  id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kobweb.application)
   alias(libs.plugins.kobwebx.markdown)
 }
 
+ktlint {
+  android.set(false)
+  outputToConsole.set(true)
+  coloredOutput.set(true)
+  ignoreFailures.set(false)
+  enableExperimentalRules.set(false)
+  filter {
+    exclude { exclude ->
+      sequenceOf("build", "generated").any {
+        exclude.file.absolutePath.contains("${File.separator}$it${File.separator}")
+      }
+    }
+  }
+}
 detekt {
   buildUponDefaultConfig = true
   config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
@@ -130,31 +145,43 @@ tasks.withType<Test> {
   }
 }
 
+tasks.register<Exec>("sqllintCheck") {
+  description = "Executa conferência de lint dos arquivos '.sql'."
+	
+  val sqlFiles =
+    fileTree(rootDir) {
+      include("**/*.sql")
+      exclude("**/build/**", "**/.gradle/**")
+    }.files
+	
+  executable = "sqlfluff"
+  args = mutableListOf("lint") + sqlFiles.map { it.absolutePath }
+	
+  inputs.files(sqlFiles)
+	
+  isIgnoreExitValue = false
+}
+
 val servicesStop =
   tasks.register<Exec>("servicesStop") {
-	
     description = "Pausa temporariamente os serviços secundários"
     commandLine("docker", "compose", "-f", "../infra/compose.yaml", "stop")
   }
 val servicesDown =
   tasks.register<Exec>("servicesDown") {
-	
     description = "Derruba os serviços secundários"
     commandLine("docker", "compose", "-f", "../infra/compose.yaml", "down")
   }
 val servicesUp =
   tasks.register<Exec>("servicesUp") {
-	
     description = "Sobe os serviços secundários"
     commandLine("docker", "compose", "-f", "../infra/compose.yaml", "up", "-d")
   }
 tasks.register("runDev") {
-	
   description = "Inicia os serviços e o servidor."
   dependsOn(servicesUp, "kobwebStart")
 }
 tasks.register("stopDev") {
-	
   description = "Derruba o servidor e os serviços"
   dependsOn("kobwebStop", servicesDown)
 }
