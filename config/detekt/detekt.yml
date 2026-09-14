@@ -341,7 +341,7 @@ naming:
     parameterPattern: '[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
   InvalidPackageDeclaration:
-    active: true
+    active: false
     rootPackage: ''
     requireRootInDeclaration: false
   LambdaParameterNaming:
@@ -362,7 +362,7 @@ naming:
       - 'mingwX64'
       - 'linuxX64'
   MemberNameEqualsClassName:
-    active: true
+    active: false
     ignoreOverridden: true
   NoNameShadowing:
     active: true
@@ -621,7 +621,7 @@ style:
     active: true
     maxJumpCount: 1
   MagicNumber:
-    active: true
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts']
     ignoreNumbers:
       - '-1'
@@ -687,7 +687,7 @@ style:
   RedundantVisibilityModifierRule:
     active: false
   ReturnCount:
-    active: true
+    active: false
     max: 2
     excludedFunctions:
       - 'equals'

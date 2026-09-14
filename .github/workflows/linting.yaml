@@ -32,3 +32,25 @@ jobs:
       - run: chmod +x gradlew
       - run: ./gradlew ktlintCheck
       - run: ./gradlew sqllintCheck
+  detekt:
+    name: Ktlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts', '**/gradle.lockfile') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - run: chmod +x gradlew
+      - run: ./gradlew detekt
