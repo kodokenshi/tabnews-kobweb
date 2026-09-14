@@ -165,13 +165,16 @@ private val ignoredLines = sequenceOf(
 	"> Run with",
 	"> Get more help at",
 	"* What went wrong:",
-	"BUILD SUCCESSFUL"
+	"BUILD SUCCESSFUL",
+	"warning workspace-aggregator"
 )
 tasks.register("runTests") {
 	
 	description = "Inicia os serviços e o servidor, então executa os testes e derruba tudo."
 	
 	doLast {
+		
+		var anyFailed = false
 		
 		val time = measureTime {
 			
@@ -181,6 +184,8 @@ tasks.register("runTests") {
 				val gradlewCommand = if (isWindows) "gradlew.bat" else "./gradlew"
 				
 				suspend fun runProcess(vararg args: String) = coroutineScope {
+					
+					println("\u001B[37mRodando '${args.joinToString(" ")}'...\u001B[0m")
 					
 					var ret = -1
 					val time = measureTime {
@@ -222,7 +227,7 @@ tasks.register("runTests") {
 				suspend fun process(name: String, vararg process: String) {
 					
 					println("$name saiu com: ${runProcess(*process)}".let {
-						if (!it.endsWith("0")) "\u001B[31m\u001B[1m$it\u001B[0m"
+						if (!it.endsWith("0")) "\u001B[31m\u001B[1m$it\u001B[0m".also { anyFailed = true }
 						else "\u001B[32m$it\u001B[0m"
 					})
 					
@@ -237,7 +242,7 @@ tasks.register("runTests") {
 				} finally {
 					
 					process("Derrubar servidor", "site:kobwebStop")
-					process("Derrubar serviços secundários", "site:servicesDown") //servicesStop
+					process("Derrubar serviços secundários", "site:servicesStop")
 					
 				}
 				
@@ -245,10 +250,14 @@ tasks.register("runTests") {
 			
 		}
 		
-		println("\n\n\u001B[37mTudo levou: ${time.toComponents { seconds, nanoseconds ->
+		println("\u001B[37m| ------------------------------\u001B[0m")
+		println("\u001B[37m| Tudo levou: ${time.toComponents { seconds, nanoseconds ->
 			val millis = nanoseconds / 1_000_000
 			"$seconds sec, ${millis.toString().padStart(3, '0')} ms"
-		}}\u001B[0m\n")
+		}}\u001B[0m")
+		println("\u001B[37m| ------------------------------\u001B[0m")
+		
+		if (anyFailed) throw Exception()
 		
 	}
 	
