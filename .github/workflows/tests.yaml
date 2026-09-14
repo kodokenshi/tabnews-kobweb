@@ -19,7 +19,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${iót.hashFiles('**/*.gradle.kts', '**/gradle.lockfile') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts', '**/gradle.lockfile') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
