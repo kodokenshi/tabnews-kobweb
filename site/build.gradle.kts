@@ -145,31 +145,43 @@ tasks.withType<Test> {
   }
 }
 
+tasks.register<Exec>("sqllintCheck") {
+  description = "Executa conferência de lint dos arquivos '.sql'."
+	
+  val sqlFiles =
+    fileTree(rootDir) {
+      include("**/*.sql")
+      exclude("**/build/**", "**/.gradle/**")
+    }.files
+	
+  executable = "sqlfluff"
+  args = mutableListOf("lint") + sqlFiles.map { it.absolutePath }
+	
+  inputs.files(sqlFiles)
+	
+  isIgnoreExitValue = false
+}
+
 val servicesStop =
   tasks.register<Exec>("servicesStop") {
-	
     description = "Pausa temporariamente os serviços secundários"
     commandLine("docker", "compose", "-f", "../infra/compose.yaml", "stop")
   }
 val servicesDown =
   tasks.register<Exec>("servicesDown") {
-	
     description = "Derruba os serviços secundários"
     commandLine("docker", "compose", "-f", "../infra/compose.yaml", "down")
   }
 val servicesUp =
   tasks.register<Exec>("servicesUp") {
-	
     description = "Sobe os serviços secundários"
     commandLine("docker", "compose", "-f", "../infra/compose.yaml", "up", "-d")
   }
 tasks.register("runDev") {
-	
   description = "Inicia os serviços e o servidor."
   dependsOn(servicesUp, "kobwebStart")
 }
 tasks.register("stopDev") {
-	
   description = "Derruba o servidor e os serviços"
   dependsOn("kobwebStop", servicesDown)
 }
