@@ -1,5 +1,10 @@
 import com.varabyte.kobweb.gradle.application.util.configAsKobwebApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.*
+import kotlin.time.measureTime
 
 buildscript {
 	repositories {
@@ -102,22 +107,33 @@ kotlin {
 }
 
 tasks.withType<Test> {
+	
 	useJUnitPlatform()
+	testLogging {
+		
+		showStandardStreams = true
+		showExceptions = true
+		showCauses = true
+		showStackTraces = true
+		
+	}
+	
 }
 
-tasks.register<Exec>("servicesStop") {
+
+val servicesStop = tasks.register<Exec>("servicesStop") {
 	
 	description = "Pausa temporariamente os serviços secundários"
 	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "stop")
 	
 }
-tasks.register<Exec>("servicesDown") {
+val servicesDown = tasks.register<Exec>("servicesDown") {
 	
 	description = "Derruba os serviços secundários"
 	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "down")
 	
 }
-tasks.register<Exec>("servicesUp") {
+val servicesUp = tasks.register<Exec>("servicesUp") {
 	
 	description = "Sobe os serviços secundários"
 	commandLine("docker", "compose", "-f", "../infra/compose.yaml", "up", "-d")
@@ -126,13 +142,115 @@ tasks.register<Exec>("servicesUp") {
 tasks.register("runDev") {
 	
 	description = "Inicia os serviços e o servidor."
-	dependsOn("servicesUp", "kobwebStart")
+	dependsOn(servicesUp, "kobwebStart")
 	
 }
 tasks.register("stopDev") {
 	
 	description = "Derruba o servidor e os serviços"
-	dependsOn("kobwebStop", "servicesDown")
+	dependsOn("kobwebStop", servicesDown)
+	
+}
+private val ignoredLines = sequenceOf(
+	"STANDARD_OUT",
+	"STANDARD_ERROR",
+	"SLF4J(W)",
+	"> Task",
+	"[jvm] FAILED",
+	"me.kodokenshi.tabnewskobweb.tests.TestContext\$TestException at TestContext.kt:",
+	"There were failing tests",
+	"FAILURE: Build failed",
+	"Execution failed for task",
+	"* Try:",
+	"> Run with",
+	"> Get more help at",
+	"* What went wrong:",
+	"BUILD SUCCESSFUL"
+)
+tasks.register("runTests") {
+	
+	description = "Inicia os serviços e o servidor, então executa os testes e derruba tudo."
+	
+	doLast {
+		
+		val time = measureTime {
+			
+			runBlocking {
+				
+				val isWindows = System.getProperty("os.name").lowercase().contains("win")
+				val gradlewCommand = if (isWindows) "gradlew.bat" else "./gradlew"
+				
+				suspend fun runProcess(vararg args: String) = coroutineScope {
+					
+					var ret = -1
+					val time = measureTime {
+						
+						val process = ProcessBuilder(gradlewCommand, *args)
+							.directory(project.rootDir)
+							.redirectErrorStream(true)
+							.start()
+						
+						launch(Dispatchers.IO) {
+							
+							process.inputStream.bufferedReader().use { reader ->
+								
+								var line: String?
+								while (reader.readLine().also { line = it } != null) {
+									
+									if (!line.isNullOrBlank() && ignoredLines.none { line.contains(it, true) })
+										println("[${args.first()}] ${line.trim()}")
+									
+								}
+								
+							}
+							
+						}.join()
+						
+						ret = process.waitFor()
+						
+					}
+					
+					println("\u001B[37mEste processo levou: ${time.toComponents { seconds, nanoseconds ->
+						val millis = nanoseconds / 1_000_000
+						"$seconds sec, ${millis.toString().padStart(3, '0')} ms"
+					}}\u001B[0m")
+					
+					ret
+					
+				}
+				
+				suspend fun process(name: String, vararg process: String) {
+					
+					println("$name saiu com: ${runProcess(*process)}".let {
+						if (!it.endsWith("0")) "\u001B[31m\u001B[1m$it\u001B[0m"
+						else "\u001B[32m$it\u001B[0m"
+					})
+					
+				}
+				
+				try {
+					
+					process("Subir serviços secundários", "site:servicesUp")
+					process("Subir servidor", "site:kobwebStart")
+					process("Subir bateria de testes", "site:allTests", "-x", ":site:jsBrowserTest", "--rerun-tasks")
+					
+				} finally {
+					
+					process("Derrubar servidor", "site:kobwebStop")
+					process("Derrubar serviços secundários", "site:servicesDown") //servicesStop
+					
+				}
+				
+			}
+			
+		}
+		
+		println("\n\n\u001B[37mTudo levou: ${time.toComponents { seconds, nanoseconds ->
+			val millis = nanoseconds / 1_000_000
+			"$seconds sec, ${millis.toString().padStart(3, '0')} ms"
+		}}\u001B[0m\n")
+		
+	}
 	
 }
 tasks.register("migration") { // ./gradlew migration -Pname=""
@@ -165,4 +283,3 @@ tasks.register("migration") { // ./gradlew migration -Pname=""
 	}
 	
 }
-
