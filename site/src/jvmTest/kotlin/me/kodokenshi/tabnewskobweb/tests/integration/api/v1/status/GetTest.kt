@@ -3,14 +3,21 @@ package me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integratio
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import me.kodokenshi.tabnewskobweb.json.Json
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.testContext
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import kotlin.time.Instant
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GetTest {
 	
+	@BeforeAll
+	suspend fun beforeAll() = waitForAllServices("/api/v1/status")
+	
 	@Test
-	fun test() = testContext("/api/v1/status", logPassedTests = false) {
+	suspend fun test() = testContext("/api/v1/status") {
 		
 		val response = fetch("http://localhost:8080/api/v1/status")
 		val responseBody = response.bodyAsText()

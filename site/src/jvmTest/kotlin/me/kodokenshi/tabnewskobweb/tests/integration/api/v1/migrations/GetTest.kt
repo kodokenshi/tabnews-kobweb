@@ -4,14 +4,21 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import me.kodokenshi.tabnewskobweb.json.Json
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.clearDatabase
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.TestContext
 import me.kodokenshi.tabnewskobweb.tests.testContext
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GetTest {
 	
+	@BeforeAll
+	suspend fun beforeAll() = waitForAllServices("GET /api/v1/migrations")
+	
 	@Test
-	fun test() = testContext("GET /api/v1/migrations") {
+	suspend fun test() = testContext("GET /api/v1/migrations") {
 		
 		test("clear database").expect(clearDatabase()).toBe(true)
 		

@@ -21,6 +21,8 @@ fun json(vararg map: String) = Json().apply {
 fun buildJson(op: Json.() -> Unit) = json(op).toString()
 fun buildJson(vararg map: String) = json(*map).toString()
 
+fun String.parseJson() = Json.parse(this)
+
 class Json(
 	root: Map<String, JsonElement> = mapOf(),
 ) {
