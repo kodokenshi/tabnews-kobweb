@@ -17,12 +17,27 @@ buildscript {
 
 plugins {
   id("io.gitlab.arturbosch.detekt") version "1.23.8"
+  id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kobweb.application)
   alias(libs.plugins.kobwebx.markdown)
 }
 
+ktlint {
+  android.set(false)
+  outputToConsole.set(true)
+  coloredOutput.set(true)
+  ignoreFailures.set(false)
+  enableExperimentalRules.set(false)
+  filter {
+    exclude { exclude ->
+      sequenceOf("build", "generated").any {
+        exclude.file.absolutePath.contains("${File.separator}$it${File.separator}")
+      }
+    }
+  }
+}
 detekt {
   buildUponDefaultConfig = true
   config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
