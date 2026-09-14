@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/playwright:v1.49.0-noble AS builder
 
 # Instala o JDK
-RUN apt-get update && apt-get install -y openjdk-25-jdk && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openjdk-21-jdk && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN chmod +x gradlew
 RUN export KOBWEB_BUILD_TYPE=prod && ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
 
 # 2. Etapa de Execução (Imagem final leve)
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app/site
 

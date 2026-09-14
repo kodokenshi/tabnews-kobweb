@@ -4,49 +4,44 @@ import com.varabyte.kobweb.api.Api
 import com.varabyte.kobweb.api.ApiContext
 import com.varabyte.kobweb.api.http.HttpMethod
 import com.varabyte.kobweb.api.http.bodyOf
-import io.ktor.http.*
+import io.ktor.http.HttpStatusCode
 import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.database.migrations.Migrations
 import me.kodokenshi.tabnewskobweb.json.errorJson
 
 @Api("/v1/migrations")
 fun status(ctx: ApiContext) {
+  if (ctx.req.method !in setOf(HttpMethod.GET, HttpMethod.POST)) {
+    ctx.res.body = bodyOf(errorJson("Method \"${ctx.req.method}\" not allowed"))
+    ctx.res.status = HttpStatusCode.MethodNotAllowed.value
+    return
+  }
 	
-	if (ctx.req.method !in setOf(HttpMethod.GET, HttpMethod.POST)) {
-		ctx.res.body = bodyOf(errorJson("Method \"${ctx.req.method}\" not allowed"))
-		ctx.res.status = HttpStatusCode.MethodNotAllowed.value
-		return
-	}
+  val isDryRun = ctx.req.method == HttpMethod.GET
 	
-	val isDryRun = ctx.req.method == HttpMethod.GET
-	
-	try {
+  try {
+    val migrations = migrations()
+    migrations.migrate(isDryRun)
 		
-		val migrations = migrations()
-		migrations.migrate(isDryRun)
-		
-		if (isDryRun) ctx.res.body = bodyOf(migrations.findPendingMigrations().map { it.toInfoJson() }.toString())
-		else {
+    if (isDryRun) {
+      ctx.res.body = bodyOf(migrations.findPendingMigrations().map { it.toInfoJson() }.toString())
+    } else {
+      val migratedMigrations = migrations.getMigratedMigrations()
 			
-			val migratedMigrations = migrations.getMigratedMigrations()
-			
-			ctx.res.body = bodyOf(migratedMigrations.map { it.toInfoJson() }.toString())
-			if (migratedMigrations.isNotEmpty()) ctx.res.status = HttpStatusCode.Created.value
-			
-		}
-		
-	} catch (t: Throwable) {
-		
-		t.printStackTrace()
-		throw t
-		
-	}
-	
+      ctx.res.body = bodyOf(migratedMigrations.map { it.toInfoJson() }.toString())
+      if (migratedMigrations.isNotEmpty()) ctx.res.status = HttpStatusCode.Created.value
+    }
+  } catch (t: Throwable) {
+    t.printStackTrace()
+    throw t
+  }
 }
-private fun migrations() = Migrations(
-	driver = Database.POSTGRES_DRIVER,
-	databaseURL = Database.POSTGRES_URL,
-	databaseUser = Database.POSTGRES_USER,
-	databasePassword = Database.POSTGRES_PASSWORD,
-	migrationsPath = "../infra/migrations"
-)
+
+private fun migrations() =
+  Migrations(
+    driver = Database.POSTGRES_DRIVER,
+    databaseURL = Database.POSTGRES_URL,
+    databaseUser = Database.POSTGRES_USER,
+    databasePassword = Database.POSTGRES_PASSWORD,
+    migrationsPath = "../infra/migrations",
+  )
