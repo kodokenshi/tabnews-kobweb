@@ -1,6 +1,7 @@
 package me.kodokenshi.tabnewskobweb.database.migrations
 
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -112,54 +113,7 @@ class Migrations(
       var migrated = 0
       localMigrations.forEach { migrationFile ->
 				
-        val migrationName = "'${migrationFile.version}' '${migrationFile.description.ifBlank { "undescribed" }}' by '${migrationFile.author}'"
-				
-        val migratedChecksum = migratedMigrations[migrationFile.version]
-        if (migratedChecksum != null) {
-          if (migratedChecksum != migrationFile.checksum) {
-            "$prefix [WARN] Migration $migrationName is different from the migrated on database!".also {
-              log.append("\n$it")
-              println(it)
-            }
-            throw IllegalStateException("Migration $migrationName is different from the migrated on database!")
-          }
-          return@forEach
-        }
-				
-        if (migrationFile.script.isBlank()) {
-          "$prefix [WARN] Migration $migrationName has no script!".also {
-            log.append("\n$it")
-            println(it)
-          }
-          throw IllegalStateException("Migration $migrationName has no script!")
-        }
-				
-        if (dryRun) {
-          "$prefix Migration $migrationName script:\n${migrationFile.script}".also {
-            log.append("\n$it")
-            println(it)
-          }
-        } else {
-          "$prefix Migrating migration: $migrationName".also {
-            log.append("\n$it")
-            println(it)
-          }
-					
-          exec(migrationFile.script)
-					
-          MigrationHistoryTable.insert {
-            it[version] = migrationFile.version
-            it[author] = migrationFile.author
-            it[description] = migrationFile.description
-            it[script] = migrationFile.script
-            it[checksum] = migrationFile.checksum
-            it[installedOn] = System.currentTimeMillis()
-          }
-					
-          this@Migrations.migratedMigrations.add(migrationFile)
-        }
-				
-        migrated++
+        if (migrateFile(migrationFile, migratedMigrations, dryRun, prefix)) migrated++
       }
 			
       if (migrated == 0) {
@@ -177,11 +131,67 @@ class Migrations(
           println(it)
         }
       } else {
-        "$prefix Complete. *Changes have been saved.*".also {
+        "$prefix $migrated file(s) migrated. Complete. *Changes have been saved.*".also {
           log.append("\n$it")
           println(it)
         }
       }
     }
+  }
+
+  private fun JdbcTransaction.migrateFile(
+    migrationFile: MigrationFile,
+    migratedMigrations: Map<Long, String>,
+    dryRun: Boolean,
+    prefix: String,
+  ): Boolean {
+    val migrationName = "'${migrationFile.version}' '${
+      migrationFile.description.ifBlank { "undescribed" }
+    }' by '${migrationFile.author}'"
+		
+    val migratedChecksum = migratedMigrations[migrationFile.version]
+    if (migratedChecksum != null) {
+      check(migratedChecksum == migrationFile.checksum) {
+        "$prefix [WARN] Migration $migrationName is different from the migrated on database!".also {
+          log.append("\n$it")
+          println(it)
+        }
+      }
+      return false
+    }
+		
+    check(migrationFile.script.isNotBlank()) {
+      "$prefix [WARN] Migration $migrationName has no script!".also {
+        log.append("\n$it")
+        println(it)
+      }
+    }
+		
+    if (dryRun) {
+      "$prefix Migration $migrationName script:\n${migrationFile.script}".also {
+        log.append("\n$it")
+        println(it)
+      }
+    } else {
+      "$prefix Migrating migration: $migrationName".also {
+        log.append("\n$it")
+        println(it)
+      }
+			
+      exec(migrationFile.script)
+			
+      MigrationHistoryTable.insert {
+        it[version] = migrationFile.version
+        it[author] = migrationFile.author
+        it[description] = migrationFile.description
+        it[script] = migrationFile.script
+        it[checksum] = migrationFile.checksum
+        it[installedOn] = System.currentTimeMillis()
+      }
+			
+      this@Migrations.migratedMigrations.add(migrationFile)
+    }
+		
+    return true
   }
 }

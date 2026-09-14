@@ -19,21 +19,16 @@ fun status(ctx: ApiContext) {
 	
   val isDryRun = ctx.req.method == HttpMethod.GET
 	
-  try {
-    val migrations = migrations()
-    migrations.migrate(isDryRun)
+  val migrations = migrations()
+  migrations.migrate(isDryRun)
+	
+  if (isDryRun) {
+    ctx.res.body = bodyOf(migrations.findPendingMigrations().map { it.toInfoJson() }.toString())
+  } else {
+    val migratedMigrations = migrations.getMigratedMigrations()
 		
-    if (isDryRun) {
-      ctx.res.body = bodyOf(migrations.findPendingMigrations().map { it.toInfoJson() }.toString())
-    } else {
-      val migratedMigrations = migrations.getMigratedMigrations()
-			
-      ctx.res.body = bodyOf(migratedMigrations.map { it.toInfoJson() }.toString())
-      if (migratedMigrations.isNotEmpty()) ctx.res.status = HttpStatusCode.Created.value
-    }
-  } catch (t: Throwable) {
-    t.printStackTrace()
-    throw t
+    ctx.res.body = bodyOf(migratedMigrations.map { it.toInfoJson() }.toString())
+    if (migratedMigrations.isNotEmpty()) ctx.res.status = HttpStatusCode.Created.value
   }
 }
 

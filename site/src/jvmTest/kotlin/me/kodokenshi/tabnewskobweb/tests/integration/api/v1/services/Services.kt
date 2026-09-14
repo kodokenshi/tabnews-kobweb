@@ -30,5 +30,5 @@ suspend fun waitForAllServices(
   var fetch = false
   while (!fetchStatusPage().also { fetch = it } && retries <= maxRetries) retries++
 	
-  if (!fetch) throw Exception("Could not fetch status page.")
+  check(fetch) { "Could not fetch status page." }
 }

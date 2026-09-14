@@ -220,7 +220,7 @@ tasks.register("runTests") {
 
           suspend fun runProcess(vararg args: String) =
             coroutineScope {
-              println("\u001B[37mRodando '${args.joinToString(" ")}'...\u001B[0m")
+              println("\u001B[37mRunning '${args.joinToString(" ")}'...\u001B[0m")
 					
               var ret = -1
               val time =
@@ -247,7 +247,7 @@ tasks.register("runTests") {
                 }
 					
               println(
-                "\u001B[37mEste processo levou: ${time.toComponents { seconds, nanoseconds ->
+                "\u001B[37mThis process took: ${time.toComponents { seconds, nanoseconds ->
                   val millis = nanoseconds / 1_000_000
                   "$seconds sec, ${millis.toString().padStart(3, '0')} ms"
                 }}\u001B[0m",
@@ -261,7 +261,7 @@ tasks.register("runTests") {
             vararg process: String,
           ) {
             println(
-              "$name saiu com: ${runProcess(*process)}".let {
+              "$name exited with: ${runProcess(*process)}".let {
                 if (!it.endsWith("0")) {
                   "\u001B[31m\u001B[1m$it\u001B[0m".also { anyFailed = true }
                 } else {
@@ -273,27 +273,27 @@ tasks.register("runTests") {
 				
           try {
 					
-            process("Subir serviços secundários", "site:servicesUp")
-            process("Subir servidor", "site:kobwebStart")
-            process("Subir bateria de testes", "site:allTests", "-x", ":site:jsBrowserTest", "--rerun-tasks")
+            process("Start secondary services", "site:servicesUp")
+            process("Start server", "site:kobwebStart")
+            process("Start battery of tests", "site:allTests", "-x", ":site:jsBrowserTest", "--rerun-tasks")
           } finally {
 					
-            process("Derrubar servidor", "site:kobwebStop")
-            process("Derrubar serviços secundários", "site:servicesStop")
+            process("Stop server", "site:kobwebStop")
+            process("Stop secondary services", "site:servicesStop")
           }
         }
       }
 		
     println("\u001B[37m| ------------------------------\u001B[0m")
     println(
-      "\u001B[37m| Tudo levou: ${time.toComponents { seconds, nanoseconds ->
+      "\u001B[37m| Everything took: ${time.toComponents { seconds, nanoseconds ->
         val millis = nanoseconds / 1_000_000
         "$seconds sec, ${millis.toString().padStart(3, '0')} ms"
       }}\u001B[0m",
     )
     println("\u001B[37m| ------------------------------\u001B[0m")
 		
-    if (anyFailed) throw Exception()
+    check(!anyFailed)
   }
 }
 tasks.register("migration") {
