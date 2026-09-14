@@ -9,27 +9,22 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 @Api("/v1/status")
-suspend fun status(ctx: ApiContext) {
-  try {
-    val updatedAt = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString()
-    val databaseVersion = Database.version()
-    val databaseMaxConnections = Database.maxConnections()
-    val databaseOpenedConnections = Database.openedConnections()
-		
-    ctx.res.body =
-      bodyOf(
-        buildJson {
-          put("updated_at", updatedAt)
-          putNested("dependencies.database") {
-            put("version", databaseVersion)
-            put("max_connections", databaseMaxConnections)
-            put("opened_connections", databaseOpenedConnections)
-          }
-        },
-        "application/json",
-      )
-  } catch (t: Throwable) {
-    t.printStackTrace()
-    throw t
-  }
+fun status(ctx: ApiContext) {
+  val updatedAt = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString()
+  val databaseVersion = Database.version()
+  val databaseMaxConnections = Database.maxConnections()
+  val databaseOpenedConnections = Database.openedConnections()
+	
+  ctx.res.body =
+    bodyOf(
+      buildJson {
+        put("updated_at", updatedAt)
+        putNested("dependencies.database") {
+          put("version", databaseVersion)
+          put("max_connections", databaseMaxConnections)
+          put("opened_connections", databaseOpenedConnections)
+        }
+      },
+      "application/json",
+    )
 }

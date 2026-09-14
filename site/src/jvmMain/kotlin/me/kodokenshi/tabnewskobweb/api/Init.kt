@@ -12,7 +12,13 @@ fun init(ctx: InitApiContext) {
 	
   var count = 1
   println("🔴 Waiting Postgres accept new connections")
-  while (Runtime.getRuntime().exec(arrayOf("docker", "exec", "postgres-dev", "pg_isready", "--host", "localhost")).waitFor() != 0) {
+  while (
+    Runtime
+      .getRuntime()
+      .exec(
+        arrayOf("docker", "exec", "postgres-dev", "pg_isready", "--host", "localhost"),
+      ).waitFor() != 0
+  ) {
     Thread.sleep(50)
     println("🔴 Waiting Postgres accept new connections${".".repeat(count)}")
     count++

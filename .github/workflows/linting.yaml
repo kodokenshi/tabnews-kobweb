@@ -33,7 +33,7 @@ jobs:
       - run: ./gradlew ktlintCheck
       - run: ./gradlew sqllintCheck
   detekt:
-    name: Ktlint
+    name: detekt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

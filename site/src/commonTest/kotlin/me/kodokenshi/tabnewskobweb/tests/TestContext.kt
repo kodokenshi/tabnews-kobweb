@@ -43,7 +43,9 @@ suspend fun testContext(
 	
   if (report) {
     if (hide) println("----- Test Context: $name")
-    println("${TestContext.FAIL}This test took ${TestContext.formatDuration(measuredTime)} to complete.${TestContext.RESET}")
+    println(
+      "${TestContext.FAIL}This test took ${TestContext.formatDuration(measuredTime)} to complete.${TestContext.RESET}",
+    )
     if (hide) println("-------------------")
   }
 	
@@ -188,7 +190,11 @@ class TestContext(
         val report = measuredTime.inWholeMilliseconds >= REPORT_TIME
 				
         if (logPassedTests || report) {
-          println("$OK[PASS]: $TEXT$name ($actual)${RESET}${if (report) " $FAIL(${formatDuration(measuredTime)})$RESET" else ""}")
+          println(
+            "$OK[PASS]: $TEXT$name ($actual)${RESET}${
+              if (report) " $FAIL(${formatDuration(measuredTime)})$RESET" else ""
+            }",
+          )
         }
         passed++
       }
@@ -208,6 +214,7 @@ class TestContext(
     action: suspend () -> T,
   ): T {
     val result = withTimeoutOrNull(timeoutMillis.milliseconds) { action() }
-    return result ?: throw Exception("Exceeded timeout of $timeoutMillis ms for a test.")
+    check(result != null) { "Exceeded timeout of $timeoutMillis ms for a test." }
+    return result
   }
 }

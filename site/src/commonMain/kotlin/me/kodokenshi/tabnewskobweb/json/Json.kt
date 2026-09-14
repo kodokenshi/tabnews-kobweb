@@ -17,7 +17,12 @@ fun json(vararg map: String) =
     val iterator = map.iterator()
     while (iterator.hasNext()) {
       val key = iterator.next()
-      val value = if (iterator.hasNext()) iterator.next() else throw IndexOutOfBoundsException("Missing value for key $key.")
+      val value =
+        if (iterator.hasNext()) {
+          iterator.next()
+        } else {
+          throw IndexOutOfBoundsException("Missing value for key $key.")
+        }
 		
       put(key, value)
     }
