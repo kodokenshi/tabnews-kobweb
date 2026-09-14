@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.delay
 import me.kodokenshi.tabnewskobweb.json.parseJson
 import me.kodokenshi.tabnewskobweb.tests.TestContext
@@ -20,12 +21,9 @@ suspend fun waitForAllServices(
 	
 	suspend fun fetchStatusPage() = try {
 		
-		val response = HttpClient().get("http://localhost:8080/api/v1/status") {
+		HttpClient().get("http://localhost:8080/api/v1/status") {
 			timeout { connectTimeoutMillis = 1000 }
-		}
-		response.bodyAsText().parseJson()!! //will throw exception if not a json
-		
-		true
+		}.status == HttpStatusCode.OK
 		
 	} catch (_: Exception) {
 		delay(500.milliseconds)
