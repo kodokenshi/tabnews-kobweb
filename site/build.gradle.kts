@@ -237,7 +237,7 @@ tasks.register("runTests") {
 				} finally {
 					
 					process("Derrubar servidor", "site:kobwebStop")
-					process("Derrubar serviços secundários", "site:servicesDown") //servicesStop
+					process("Derrubar serviços secundários", "site:servicesStop")
 					
 				}
 				
