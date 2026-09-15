@@ -1,0 +1,16 @@
+{
+  "name": "site",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tests": "node run.js site:runTests",
+    "dev": "node run.js site:runDev",
+    "lint:style:check": "node run.js site:sqllintCheck",
+    "lint:code:check": "node run.js site:detekt"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
