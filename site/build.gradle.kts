@@ -210,7 +210,6 @@ tasks.register("runTests") {
 		
     val time =
       measureTime {
-			
         runBlocking {
           val isWindows = System.getProperty("os.name").lowercase().contains("win")
           val gradlewCommand = if (isWindows) "gradlew.bat" else "./gradlew"
@@ -257,9 +256,10 @@ tasks.register("runTests") {
             name: String,
             vararg process: String,
           ) {
+            val exitCode = runProcess(*process)
             println(
-              "$name exited with: ${runProcess(*process)}".let {
-                if (!it.endsWith("0")) {
+              "$name exited with: $exitCode".let {
+                if (exitCode != 0) {
                   "\u001B[31m\u001B[1m$it\u001B[0m".also { anyFailed = true }
                 } else {
                   "\u001B[32m$it\u001B[0m"
@@ -269,12 +269,10 @@ tasks.register("runTests") {
           }
 				
           try {
-					
             process("Start secondary services", "site:servicesUp")
             process("Start server", "site:kobwebStart")
             process("Start battery of tests", "site:allTests", "-x", ":site:jsBrowserTest", "--rerun-tasks")
           } finally {
-					
             process("Stop server", "site:kobwebStop")
             process("Stop secondary services", "site:servicesStop")
           }
