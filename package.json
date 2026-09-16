@@ -8,7 +8,8 @@
     "dev": "node run.js site:runDev",
     "lint:style:check": "node run.js site:sqllintCheck",
     "lint:code:check": "node run.js site:detekt",
-    "prepare": "husky"
+    "prepare": "husky",
+    "commit": "cz"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,13 @@
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
+    "commitizen": "^4.3.2",
+    "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.7"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
