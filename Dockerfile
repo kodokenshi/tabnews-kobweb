@@ -11,7 +11,7 @@ COPY gradlew .
 COPY gradle gradle
 COPY settings.gradle.kts .
 COPY site site
-
+COPY site/infra/migrations infra/migrations
 RUN chmod +x gradlew
 
 # Compila e exporta no modo FULLSTACK
@@ -26,6 +26,7 @@ WORKDIR /app/site
 COPY --from=builder /app/site/.kobweb/conf.yaml ./.kobweb/conf.yaml
 COPY --from=builder /app/site/.kobweb/site/system ./.kobweb/site/system
 COPY --from=builder /app/site/.kobweb/server ./.kobweb/server
+COPY --from=builder /app/infra/migrations ./infra/migrations
 
 ENV PORT=8080
 EXPOSE 8080

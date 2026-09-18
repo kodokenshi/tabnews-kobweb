@@ -22,7 +22,10 @@ class Migrations(
 
   private fun findFiles() {
     val dir = File(migrationsPath)
-    if (!dir.exists()) dir.mkdirs()
+    if (!dir.exists()) {
+      log.append("[MIGRATIONS] Migrations folder \"$migrationsPath\" does not exist.")
+      return
+    }
 		
     val files =
       dir
