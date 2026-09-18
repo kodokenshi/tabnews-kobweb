@@ -1,40 +1,50 @@
 package me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.migrations
 
+import io.ktor.client.request.get
+import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import me.kodokenshi.tabnewskobweb.json.Json
+import me.kodokenshi.tabnewskobweb.json.parseJsonList
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.TestConfig
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.clearDatabase
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.services.waitForAllServices
-import me.kodokenshi.tabnewskobweb.tests.TestContext
-import me.kodokenshi.tabnewskobweb.tests.testContext
-import org.junit.jupiter.api.BeforeAll
+import me.kodokenshi.tabnewskobweb.tests.services.client
+import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
+import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
+import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBePresent
+import me.kodokenshi.tabnewskobweb.tests.test.testContext
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostTest {
-  @BeforeAll
-  suspend fun beforeAll() = waitForAllServices("POST /api/v1/migrations")
-
   @Test
   suspend fun test() =
-    testContext("POST /api/v1/migrations") {
-      test("clear database").expect(clearDatabase()).toBe(true)
-		
-      checkMigrations(false, HttpStatusCode.Created)
-      checkMigrations(true, HttpStatusCode.OK)
-    }
+    testContext(this::class, TestConfig.IS_VERBOSE) {
+      describe("POST /api/v1/migrations") {
+        waitForAllServices()
+        describe("Anonymous user") {
+          describe("Clearing database") {
+            expect(clearDatabase()).toBe(true)
+          }
+          repeat(2) {
+            describe(if (it == 0) "Running pending migrations" else "Retrieving current migrations status") {
+              val response =
+                if (it == 0) {
+                  client.post("http://localhost:8080/api/v1/migrations")
+                } else {
+                  client.get("http://localhost:8080/api/v1/migrations")
+                }
+              expect(response.status).toBe(
+                if (it == 0) {
+                  HttpStatusCode.Created
+                } else {
+                  HttpStatusCode.OK
+                },
+              )
 
-  private suspend fun TestContext.checkMigrations(
-    expectEmpty: Boolean,
-    expectCode: HttpStatusCode,
-  ) {
-    val response = fetch("http://localhost:8080/api/v1/migrations", TestContext.FetchMethod.POST)
-    val responseBody = response.bodyAsText()
-		
-    test("POST should return $expectCode").expect(response.status).toBe(expectCode)
-		
-    val migrationList = test("responseBody should be List<Json>").expect(Json.parseList(responseBody)).toBePresent()
-    test("migrationList should be empty = $expectEmpty").expect(migrationList.isEmpty()).toBe(expectEmpty)
-  }
+              val body = expect(response.bodyAsText().parseJsonList()).toBePresent()
+              expect(body.isEmpty()).toBe(it != 0)
+            }
+          }
+        }
+      }
+    }
 }
