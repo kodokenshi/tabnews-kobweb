@@ -38,5 +38,5 @@ private fun migrations() =
     databaseURL = Database.POSTGRES_URL,
     databaseUser = Database.POSTGRES_USER,
     databasePassword = Database.POSTGRES_PASSWORD,
-    migrationsPath = "../infra/migrations",
+    migrationsPath = "infra/migrations",
   )

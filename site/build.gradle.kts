@@ -266,17 +266,17 @@ tasks.register("runTests") {
 val servicesUp =
   tasks.register<Exec>("servicesUp") {
     description = "Start services."
-    commandLine("docker", "compose", "-f", "../infra/compose.yaml", "up", "-d")
+    commandLine("docker", "compose", "-f", "infra/compose.yaml", "up", "-d")
   }
 val servicesStop =
   tasks.register<Exec>("servicesStop") {
     description = "Stop services temporarily."
-    commandLine("docker", "compose", "-f", "../infra/compose.yaml", "stop")
+    commandLine("docker", "compose", "-f", "infra/compose.yaml", "stop")
   }
 val servicesDown =
   tasks.register<Exec>("servicesDown") {
     description = "Stop services."
-    commandLine("docker", "compose", "-f", "../infra/compose.yaml", "down")
+    commandLine("docker", "compose", "-f", "infra/compose.yaml", "down")
   }
 
 tasks.register<Exec>("sqllintCheck") {
@@ -303,15 +303,17 @@ tasks.register("migration") {
   description = "Create a new migration file based on current timestamp."
 	
   val nameProvider = providers.gradleProperty("name").orElse("migration")
-  val rootDir = layout.settingsDirectory.asFile
+  val rootDir = layout.projectDirectory.asFile
 	
   doLast {
 		
+    val userName = System.getProperty("user.name")
     val migrationName = nameProvider.get()
 		
     val sanitizedName = migrationName.lowercase().replace(Regex("[^a-z0-9_]"), "-")
+    val sanitizedUserName = userName.lowercase().replace(Regex("[^a-z0-9_]"), "-")
 		
-    val fileName = "V${System.currentTimeMillis()}__$sanitizedName.sql"
+    val fileName = "${System.currentTimeMillis()}_${sanitizedUserName}_$sanitizedName.sql"
 		
     val migrationDir = File("$rootDir/infra", "migrations")
     if (!migrationDir.exists()) migrationDir.mkdirs()
