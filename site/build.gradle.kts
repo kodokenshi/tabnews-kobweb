@@ -4,7 +4,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.Properties
+import kotlin.time.DurationUnit
 import kotlin.time.measureTime
+import kotlin.time.toDuration
 
 buildscript {
   repositories {
@@ -94,11 +96,13 @@ kotlin {
   sourceSets {
 		
     commonMain.dependencies {
-      implementation(kotlin("test"))
       implementation("io.ktor:ktor-client-core:3.6.0")
       implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
       implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
       implementation("io.github.cdimascio:dotenv-kotlin:6.5.1")
+    }
+    commonTest.dependencies {
+      implementation(kotlin("test"))
     }
 		
     jsMain.dependencies {
@@ -114,8 +118,6 @@ kotlin {
     }
 		
     jvmMain.dependencies {
-      implementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
-			
       compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime
       implementation("io.ktor:ktor-client-cio:3.6.0")
 			
@@ -128,18 +130,69 @@ kotlin {
       implementation("org.postgresql:postgresql:42.7.13")
 // 			implementation("com.zaxxer:HikariCP:7.1.0")
     }
+    jvmTest.dependencies {
+      implementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+    }
   }
 }
 
 tasks.withType<Test> {
   useJUnitPlatform()
   testLogging {
-		
     showStandardStreams = true
     showExceptions = true
     showCauses = true
     showStackTraces = true
   }
+  addTestListener(
+    object : TestListener {
+      override fun afterSuite(
+        suite: TestDescriptor,
+        result: TestResult,
+      ) {
+        if (suite.parent != null) return
+
+        val okText = "\u001B[32m\u001B[1m"
+        val failText = "\u001B[31m\u001B[1m"
+        val reset = "\u001B[0m"
+
+        println(
+          buildString {
+            append(".\n. Tests: ")
+            append(
+              buildString {
+                val failed = result.failedTestCount
+                val passed = result.successfulTestCount
+                val total = result.testCount
+                val skipped = result.skippedTestCount
+
+                if (failed > 0) append("$failText$failed failed$reset")
+                if (passed > 0) {
+                  if (isNotBlank()) append(", ")
+                  append("$okText$passed passed$reset")
+                }
+
+                if (isNotBlank()) append(", ")
+                append("$total total")
+
+                if (skipped > 0) append(", $skipped skipped")
+              },
+            )
+            append(
+              "\n. Time:  ${(result.endTime - result.startTime).toDuration(DurationUnit.MILLISECONDS).toComponents {
+                seconds,
+                nanoseconds,
+                ->
+                val millis = nanoseconds / 1_000_000
+                "$seconds.${millis.toString().padStart(3, '0')} s"
+              }}\n.",
+            )
+          },
+        )
+      }
+    },
+  )
+  systemProperty("verbose", System.getProperty("verbose", "false"))
 }
 
 tasks.register("runDev") {
@@ -148,7 +201,7 @@ tasks.register("runDev") {
     runBlocking {
       try {
         prepareAndRunProcess("Start secondary services", arrayOf("site:servicesUp"))
-        prepareAndRunProcess("Start server", arrayOf("site:kobwebStart", "-t"))
+        prepareAndRunProcess("Start server", arrayOf("site:kobwebStart", "-t"), false)
       } finally {
         prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop"))
         prepareAndRunProcess("Stop secondary services", arrayOf("site:servicesStop"))
@@ -167,7 +220,6 @@ tasks.register("stopDev") {
 }
 tasks.register("runTests") {
   description = "Start services and server, execute tests, then stop on complete."
-	
   doLast {
 		
     var anyFailed = false
@@ -179,9 +231,16 @@ tasks.register("runTests") {
             listOf(
               "Start secondary services" to arrayOf("site:servicesUp"),
               "Start server" to arrayOf("site:kobwebStart"),
-              "Start battery of tests" to arrayOf("site:allTests", "-x", ":site:jsBrowserTest", "--rerun-tasks"),
-            ).forEach { (name, process) ->
-              val failed = !prepareAndRunProcess(name, process)
+              "Start battery of tests" to
+                arrayOf(
+                  "site:allTests",
+                  "-Dverbose=${project.findProperty("verbose") ?: "false"}",
+                  "-x",
+                  ":site:jsBrowserTest",
+                  "--rerun-tasks",
+                ),
+            ).forEachIndexed { index, (name, process) ->
+              val failed = !prepareAndRunProcess(name, process, index != 2)
               if (failed) anyFailed = true
             }
           } finally {
@@ -195,7 +254,7 @@ tasks.register("runTests") {
     println(
       "\u001B[37m| Everything took: ${time.toComponents { seconds, nanoseconds ->
         val millis = nanoseconds / 1_000_000
-        "$seconds sec, ${millis.toString().padStart(3, '0')} ms"
+        "$seconds.${millis.toString().padStart(3, '0')} s"
       }}\u001B[0m",
     )
     println("\u001B[37m| ------------------------------\u001B[0m")
@@ -237,24 +296,6 @@ tasks.register<Exec>("sqllintCheck") {
   isIgnoreExitValue = false
 }
 
-private val ignoredLines =
-  sequenceOf(
-    "STANDARD_OUT",
-    "STANDARD_ERROR",
-    "SLF4J(W)",
-    "> Task",
-    "[jvm] FAILED",
-    "me.kodokenshi.tabnewskobweb.tests.TestContext\$TestException at TestContext.kt:",
-    "There were failing tests",
-    "FAILURE: Build failed",
-    "Execution failed for task",
-    "* Try:",
-    "> Run with",
-    "> Get more help at",
-    "* What went wrong:",
-    "BUILD SUCCESSFUL",
-    "warning workspace-aggregator",
-  )
 tasks.register("migration") {
   // ./gradlew migration -Pname=""
 	
@@ -291,50 +332,79 @@ tasks.register("migration") {
 private val isWindows = System.getProperty("os.name").lowercase().contains("win")
 private val gradlewCommand = if (isWindows) "gradlew.bat" else "./gradlew"
 
-private suspend fun runProcess(args: Array<String>) =
-  coroutineScope {
-    println("\u001B[37mRunning '${args.joinToString(" ")}'...\u001B[0m")
-		
-    var ret = -1
-    val time =
-      measureTime {
-        val process =
-          ProcessBuilder(listOf(gradlewCommand) + args)
-            .directory(project.rootDir)
-            .redirectErrorStream(true)
-            .start()
+private val ignoredLines =
+  sequenceOf(
+    "STANDARD_OUT",
+    "STANDARD_ERROR",
+    "SLF4J(W)",
+    "> Task",
+    "[jvm] FAILED",
+    "There were failing tests",
+    "FAILURE: Build failed",
+    "Execution failed for task",
+    "* Try:",
+    "> Run with",
+    "> Get more help at",
+    "* What went wrong:",
+    "BUILD SUCCESSFUL",
+    "warning workspace-aggregator",
+    "me.kodokenshi.tabnewskobweb.tests.test.TestFailedException at Test.kt",
+  )
+
+private suspend fun runProcess(
+  args: Array<String>,
+  logOnlyIfFail: Boolean,
+) = coroutineScope {
+  println("\u001B[37mRunning '${args.joinToString(" ")}'...\u001B[0m")
+  val log by lazy { StringBuilder() }
+  var ret = -1
+  val time =
+    measureTime {
+      val process =
+        ProcessBuilder(listOf(gradlewCommand) + args)
+          .directory(project.rootDir)
+          .redirectErrorStream(true)
+          .start()
 				
-        launch(Dispatchers.IO) {
-          process.inputStream.bufferedReader().use { reader ->
+      launch(Dispatchers.IO) {
+        process.inputStream.bufferedReader().use { reader ->
 						
-            var line: String?
-            while (reader.readLine().also { line = it } != null) {
-              if (!line.isNullOrBlank() && ignoredLines.none { line.contains(it, true) }) {
-                println("[${args.first()}] ${line.trim()}")
+          var line: String?
+          while (reader.readLine().also { line = it } != null) {
+            if (!line.isNullOrBlank() && ignoredLines.none { line.contains(it, true) }) {
+              "[${args.first()}] ${line.trim()}".let {
+                if (logOnlyIfFail) {
+                  log.append("$it\n")
+                } else {
+                  println(it)
+                }
               }
             }
           }
-        }.join()
+        }
+      }.join()
 				
-        ret = process.waitFor()
-      }
+      ret = process.waitFor()
+    }
 		
-    println(
-      "\u001B[37mThis process took: ${time.toComponents { seconds, nanoseconds ->
-        val millis = nanoseconds / 1_000_000
-        "$seconds sec, ${millis.toString().padStart(3, '0')} ms"
-      }}\u001B[0m",
-    )
+  if (logOnlyIfFail && ret != 0) println(log)
+  println(
+    "\u001B[37mThis process took: ${time.toComponents { seconds, nanoseconds ->
+      val millis = nanoseconds / 1_000_000
+      "$seconds.${millis.toString().padStart(3, '0')} s"
+    }}\u001B[0m",
+  )
 		
-    ret
-  }
+  ret
+}
 
 /**Returns `true` if process exit code is `0`.*/
 private suspend fun prepareAndRunProcess(
   name: String,
   process: Array<String>,
+  logOnlyIfFail: Boolean = true,
 ): Boolean {
-  val exitCode = runProcess(process)
+  val exitCode = runProcess(process, logOnlyIfFail)
   println(
     "$name exited with: $exitCode".let {
       if (exitCode != 0) {

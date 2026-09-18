@@ -34,6 +34,8 @@ fun buildJson(vararg map: String) = json(*map).toString()
 
 fun String.parseJson() = Json.parse(this)
 
+fun String.parseJsonList() = Json.parseList(this)
+
 class Json(
   root: Map<String, JsonElement> = mapOf(),
 ) {

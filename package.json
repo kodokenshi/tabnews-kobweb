@@ -7,6 +7,7 @@
     "dev": "node gradlew.js site:runDev",
     "dev:stop": "node gradlew.js site:stopDev",
     "test": "node gradlew.js site:runTests",
+    "test:verbose": "node gradlew.js site:runTests -Pverbose=true",
     "services:up": "node gradlew.js site:servicesUp",
     "services:stop": "node gradlew.js site:servicesStop",
     "services:down": "node gradlew.js site:servicesDown",
