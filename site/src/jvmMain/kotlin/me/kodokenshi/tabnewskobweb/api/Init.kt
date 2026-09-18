@@ -1,6 +1,5 @@
 package me.kodokenshi.tabnewskobweb.api
 
-import com.varabyte.kobweb.api.env.isDev
 import com.varabyte.kobweb.api.init.InitApi
 import com.varabyte.kobweb.api.init.InitApiContext
 import me.kodokenshi.tabnewskobweb.database.Database
@@ -8,7 +7,8 @@ import me.kodokenshi.tabnewskobweb.database.migrations.Migrations
 
 @InitApi
 fun init(ctx: InitApiContext) {
-  if (!ctx.env.isDev || System.getenv("KOBWEB_BUILD_TYPE") == "prod") return
+  ctx // ignore
+  if (System.getenv("KOBWEB_BUILD_TYPE") == "prod") return
 	
   var count = 1
   println("🔴 Waiting Postgres accept new connections")
