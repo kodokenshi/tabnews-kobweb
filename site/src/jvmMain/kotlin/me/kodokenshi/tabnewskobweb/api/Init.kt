@@ -6,24 +6,8 @@ import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.database.migrations.Migrations
 
 @InitApi
-fun init(ctx: InitApiContext) {
-  ctx // ignore
+fun init(ignored: InitApiContext) {
   if (System.getenv("KOBWEB_BUILD_TYPE") == "prod") return
-	
-  var count = 1
-  println("🔴 Waiting Postgres accept new connections")
-  while (
-    Runtime
-      .getRuntime()
-      .exec(
-        arrayOf("docker", "exec", "postgres-dev", "pg_isready", "--host", "localhost"),
-      ).waitFor() != 0
-  ) {
-    Thread.sleep(50)
-    println("🔴 Waiting Postgres accept new connections${".".repeat(count)}")
-    count++
-  }
-  println("🟢 Postgres ready.")
 	
   Migrations(
     driver = Database.POSTGRES_DRIVER,

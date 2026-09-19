@@ -1,5 +1,6 @@
 package me.kodokenshi.tabnewskobweb.tests.test
 
+import me.kodokenshi.tabnewskobweb.tests.test.exception.TestFailedException
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.measureTime
@@ -13,8 +14,6 @@ suspend fun testContext(
     throw TestFailedException()
   }
 }
-
-class TestFailedException : Exception()
 
 class Test(
   private val owner: KClass<*>,
