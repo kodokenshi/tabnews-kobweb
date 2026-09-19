@@ -28,7 +28,7 @@ class GetTest {
             describe("Retrieving current migration status $it") {
               val response = client.get("http://localhost:8080/api/v1/migrations")
               expect(response.status).toBe(HttpStatusCode.OK)
-
+							
               val body = expect(response.bodyAsText().parseJsonList()).toBePresent()
               expect(body).toNotBeEmpty()
             }

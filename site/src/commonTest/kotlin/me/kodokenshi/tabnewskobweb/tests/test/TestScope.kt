@@ -1,6 +1,8 @@
 package me.kodokenshi.tabnewskobweb.tests.test
 
 import kotlinx.coroutines.withTimeoutOrNull
+import me.kodokenshi.tabnewskobweb.tests.test.exception.TestException
+import me.kodokenshi.tabnewskobweb.tests.test.exception.TestTimeoutException
 import kotlin.time.Duration
 import kotlin.time.measureTime
 
@@ -93,7 +95,7 @@ class TestScopeDsl(
           pass = true
         } catch (e: Throwable) {
           pass = false
-          description = e.message ?: description
+          description = if (e is TestException) e.message ?: "unspecified" else e.stackTraceToString()
         }
       }
     return TestResult(measureTime, pass, description)
@@ -103,9 +105,3 @@ class TestScopeDsl(
 interface TestScope : TestContextScope {
   fun <T> expect(value: T): AssertionScope<T>
 }
-
-class TestTimeoutException(
-  timeout: Duration,
-) : Exception(
-    "${Test.FAIL_TEXT}Exceeded timeout of ${Test.formatDuration(timeout)} ${Test.FAIL_TEXT}for a test.${Test.RESET}",
-  )

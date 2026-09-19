@@ -1,9 +1,11 @@
 import com.varabyte.kobweb.gradle.application.util.configAsKobwebApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.Properties
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.measureTime
 import kotlin.time.toDuration
@@ -195,12 +197,28 @@ tasks.withType<Test> {
   systemProperty("verbose", System.getProperty("verbose", "false"))
 }
 
+tasks.register("servicesWaitDatabase") {
+  description = "Wait for Postgres accept new connections."
+  doLast {
+    runBlocking {
+      println("🔴 Waiting Postgres accept new connections...")
+      val process =
+        ProcessBuilder("docker", "exec", "postgres-dev", "pg_isready", "--host", "localhost")
+          .directory(project.rootDir)
+
+      while (process.start().waitFor() != 0) delay(50.milliseconds)
+
+      println("🟢 Postgres ready.")
+    }
+  }
+}
 tasks.register("runDev") {
   description = "Start services and server."
   doLast {
     runBlocking {
       try {
         prepareAndRunProcess("Start secondary services", arrayOf("site:servicesUp"))
+        prepareAndRunProcess("Services wait database", arrayOf("site:servicesWaitDatabase"))
         prepareAndRunProcess("Start server", arrayOf("site:kobwebStart", "-t"), false)
       } finally {
         prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop"))
@@ -230,6 +248,7 @@ tasks.register("runTests") {
           try {
             listOf(
               "Start secondary services" to arrayOf("site:servicesUp"),
+              "Services wait database" to arrayOf("site:servicesWaitDatabase"),
               "Start server" to arrayOf("site:kobwebStart"),
               "Start battery of tests" to
                 arrayOf(
@@ -240,7 +259,7 @@ tasks.register("runTests") {
                   "--rerun-tasks",
                 ),
             ).forEachIndexed { index, (name, process) ->
-              val failed = !prepareAndRunProcess(name, process, index != 2)
+              val failed = !prepareAndRunProcess(name, process, index != 3)
               if (failed) anyFailed = true
             }
           } finally {
