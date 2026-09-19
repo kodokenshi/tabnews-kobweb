@@ -9,12 +9,13 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
-val client get() =
+val client by lazy {
   HttpClient {
     install(HttpTimeout) {
       connectTimeoutMillis = 1000
     }
   }
+}
 
 suspend fun waitForAllServices(maxRetries: Int = 100) =
   check(
