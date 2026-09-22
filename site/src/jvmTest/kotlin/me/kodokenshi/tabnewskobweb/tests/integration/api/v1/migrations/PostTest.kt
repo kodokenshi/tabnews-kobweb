@@ -10,7 +10,7 @@ import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration
 import me.kodokenshi.tabnewskobweb.tests.services.client
 import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
-import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBePresent
+import me.kodokenshi.tabnewskobweb.tests.test.assertion.toNotBeNull
 import me.kodokenshi.tabnewskobweb.tests.test.testContext
 import org.junit.jupiter.api.Test
 
@@ -40,7 +40,7 @@ class PostTest {
                 },
               )
 							
-              val body = expect(response.bodyAsText().parseJsonList()).toBePresent()
+              val body = expect(response.bodyAsText().parseJsonList()).toNotBeNull()
               expect(body.isEmpty()).toBe(it != 0)
             }
           }

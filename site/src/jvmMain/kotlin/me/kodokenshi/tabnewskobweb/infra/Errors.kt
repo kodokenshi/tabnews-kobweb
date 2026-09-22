@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:standard:filename", "detekt:MatchingDeclarationName")
-
 package me.kodokenshi.tabnewskobweb.infra
 
 import io.ktor.http.HttpStatusCode
@@ -7,7 +5,7 @@ import me.kodokenshi.tabnewskobweb.json.buildJson
 
 open class InternalServerError(
   message: String = "Um erro interno não esperado aconteceu.",
-  cause: Throwable,
+  cause: Throwable? = null,
   val action: String = "Entre em contato com o suporte.",
   val statusCode: HttpStatusCode = HttpStatusCode.InternalServerError,
 ) : Throwable(message, cause) {
@@ -19,3 +17,20 @@ open class InternalServerError(
       put("status_code", statusCode.value)
     }
 }
+
+class MethodNotAllowedError :
+  InternalServerError(
+    message = "Método não permitido para este endpoint.",
+    action = "Verifique se o método HTTP enviado é válido para este endpoint.",
+    statusCode = HttpStatusCode.MethodNotAllowed,
+  )
+
+class ServiceError(
+  message: String = "Serviço indisponível no momento.",
+  cause: Throwable?,
+) : InternalServerError(
+    message = message,
+    action = "Verifique se o serviço está disponível.",
+    statusCode = HttpStatusCode.ServiceUnavailable,
+    cause = cause,
+  )

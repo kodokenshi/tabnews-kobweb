@@ -9,8 +9,8 @@ import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration
 import me.kodokenshi.tabnewskobweb.tests.services.client
 import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
-import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBePresent
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toNotBeEmpty
+import me.kodokenshi.tabnewskobweb.tests.test.assertion.toNotBeNull
 import me.kodokenshi.tabnewskobweb.tests.test.testContext
 import org.junit.jupiter.api.Test
 
@@ -29,7 +29,7 @@ class GetTest {
               val response = client.get("http://localhost:8080/api/v1/migrations")
               expect(response.status).toBe(HttpStatusCode.OK)
 							
-              val body = expect(response.bodyAsText().parseJsonList()).toBePresent()
+              val body = expect(response.bodyAsText().parseJsonList()).toNotBeNull()
               expect(body).toNotBeEmpty()
             }
           }

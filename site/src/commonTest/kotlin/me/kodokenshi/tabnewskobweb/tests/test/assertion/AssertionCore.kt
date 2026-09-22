@@ -15,8 +15,12 @@ fun <T> AssertionScope<T>.toNotBe(value: T) {
   }
 }
 
-fun <T> AssertionScope<T>.toBePresent() = actual ?: throw TestAssertionException("not null", null)
+fun <T> AssertionScope<T>.toBePresent() = toNotBeNull()
 
-fun <T> AssertionScope<T>.toBeMissing() {
+fun <T> AssertionScope<T>.toNotBeNull() = actual ?: throw TestAssertionException("not null", null)
+
+fun <T> AssertionScope<T>.toBeMissing() = toBeNull()
+
+fun <T> AssertionScope<T>.toBeNull() {
   if (actual != null) throw TestAssertionException("null", actual)
 }
