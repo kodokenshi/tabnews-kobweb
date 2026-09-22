@@ -8,8 +8,6 @@ import me.kodokenshi.tabnewskobweb.infra.InternalServerError
 
 @InitApi
 fun init(ctx: InitApiContext) {
-  if (System.getenv("KOBWEB_BUILD_TYPE") == "prod") return
-	
   try {
     Migrations(
       driver = Database.POSTGRES_DRIVER,
@@ -19,6 +17,6 @@ fun init(ctx: InitApiContext) {
       migrationsPath = "infra/migrations",
     ).migrate()
   } catch (e: Throwable) {
-    ctx.logger.error(InternalServerError(cause = e).toString())
+    ctx.logger.error((e as? InternalServerError)?.toString() ?: InternalServerError(cause = e).toString())
   }
 }

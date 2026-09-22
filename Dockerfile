@@ -1,35 +1,14 @@
-# 1. Etapa de Build
-FROM mcr.microsoft.com/playwright:v1.49.0-noble AS builder
-
-# Instala o JDK
-RUN apt-get update && apt-get install -y openjdk-21-jdk && rm -rf /var/lib/apt/lists/*
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
-# Copia os arquivos do projeto
-COPY gradlew .
-COPY gradle gradle
-COPY settings.gradle.kts .
-COPY site site
-COPY site/infra/migrations infra/migrations
-RUN chmod +x gradlew
+COPY . .
 
-# Compila e exporta no modo FULLSTACK
-RUN export KOBWEB_BUILD_TYPE=prod && ./gradlew :site:kobwebExport -Pkobweb.export.layout=FULLSTACK
+RUN chmod +x ./gradlew
+RUN ./gradlew :site:assemble --no-daemon
 
-# 2. Etapa de Execução (Imagem final leve)
-FROM eclipse-temurin:21-jre
+COPY --from=builder /app /app
 
-WORKDIR /app/site
-
-# Copia o arquivo de configuração conf.yaml e as pastas compiladas
-COPY --from=builder /app/site/.kobweb/conf.yaml ./.kobweb/conf.yaml
-COPY --from=builder /app/site/.kobweb/site/system ./.kobweb/site/system
-COPY --from=builder /app/site/.kobweb/server ./.kobweb/server
-COPY --from=builder /app/infra/migrations ./infra/migrations
-
-ENV PORT=8080
 EXPOSE 8080
 
-# Executa o servidor JVM do Kobweb
-CMD ["java", "-jar", ".kobweb/server/server.jar", "--env", "prod", "--port", "8080"]
+CMD ["./gradlew", ":site:kobwebStart", "-PkobwebEnv=PROD", "-PkobwebRunLayout=FULLSTACK", "-Pserver.host=0.0.0.0", "--no-daemon"]
