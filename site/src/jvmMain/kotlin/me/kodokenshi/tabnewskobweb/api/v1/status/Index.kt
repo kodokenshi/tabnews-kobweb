@@ -5,12 +5,12 @@ import com.varabyte.kobweb.api.ApiContext
 import com.varabyte.kobweb.api.http.bodyOf
 import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.json.buildJson
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Api("/v1/status")
 fun status(ctx: ApiContext) {
-  val updatedAt = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString()
+  val updatedAt = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()).toString()
   val databaseVersion = Database.version()
   val databaseMaxConnections = Database.maxConnections()
   val databaseOpenedConnections = Database.openedConnections()
@@ -21,8 +21,8 @@ fun status(ctx: ApiContext) {
         put("updated_at", updatedAt)
         putNested("dependencies.database") {
           put("version", databaseVersion)
-          put("max_connections", databaseMaxConnections)
           put("opened_connections", databaseOpenedConnections)
+          put("max_connections", databaseMaxConnections)
         }
       },
       "application/json",

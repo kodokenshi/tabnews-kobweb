@@ -99,6 +99,7 @@ kotlin {
 		
     commonMain.dependencies {
       implementation("io.ktor:ktor-client-core:3.6.0")
+      implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
       implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
       implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
       implementation("io.github.cdimascio:dotenv-kotlin:6.5.1")

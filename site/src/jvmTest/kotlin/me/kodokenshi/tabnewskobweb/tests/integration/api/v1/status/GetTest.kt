@@ -30,8 +30,8 @@ class GetTest {
             expect(Instant.parseOrNull(updatedAt).toString()).toBe(updatedAt)
 						
             expect(body.getNestedString("dependencies.database.version")).toBe("16.0")
-            expect(body.getNestedInt("dependencies.database.max_connections")).toBe(100)
             expect(body.getNestedInt("dependencies.database.opened_connections")).toBe(1)
+            expect(body.getNestedInt("dependencies.database.max_connections")).toBe(100)
           }
         }
       }
