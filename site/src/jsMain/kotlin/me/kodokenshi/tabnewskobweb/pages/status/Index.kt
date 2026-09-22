@@ -23,7 +23,6 @@ import me.kodokenshi.tabnewskobweb.component.AsyncInterval
 import me.kodokenshi.tabnewskobweb.util.PTBR
 import me.kodokenshi.tabnewskobweb.util.fetchAPI
 import org.jetbrains.compose.web.css.px
-import org.jetbrains.compose.web.dom.Div
 import org.jetbrains.compose.web.dom.H1
 import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.Text
