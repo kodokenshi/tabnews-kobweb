@@ -1,11 +1,11 @@
 package me.kodokenshi.tabnewskobweb.database
 
 import io.github.cdimascio.dotenv.dotenv
-import org.jetbrains.exposed.v1.core.IColumnType
+import me.kodokenshi.tabnewskobweb.infra.ServiceError
 import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import java.sql.ResultSet
 
 object Database {
   val POSTGRES_URL get() =
@@ -31,7 +31,7 @@ object Database {
       ignoreIfMissing = true
     }
   }
-  val database by lazy {
+  private val database by lazy {
     Database.connect(
       url = POSTGRES_URL,
       user = POSTGRES_USER,
@@ -40,23 +40,37 @@ object Database {
     )
   }
 
-  fun version() = database.fullVersion
+  fun version() =
+    transaction {
+      exec("show server_version") {
+        if (it.next()) it.getString(1) else null
+      }
+    }
 
-  fun maxConnections() = query("show max_connections") { if (it.next()) it.getInt(1) else 0 }
+  fun maxConnections() =
+    transaction {
+      exec("show max_connections") {
+        if (it.next()) it.getInt(1) else 0
+      }
+    }
 
   fun openedConnections() =
-    query(
-      "select count(*)::int from pg_stat_activity where datname = ?",
-      listOf(
-        VarCharColumnType() to env.get("POSTGRES_DB"),
-      ),
-    ) { if (it.next()) it.getInt(1) else 0 }
+    transaction {
+      exec(
+        stmt = "select count(*)::int from pg_stat_activity where datname = ?",
+        args = listOf(VarCharColumnType() to env.get("POSTGRES_DB")),
+      ) {
+        if (it.next()) it.getInt(1) else 0
+      }
+    }
 
-  private fun <T> query(
-    sql: String,
-    args: Iterable<Pair<IColumnType<*>, Any?>> = emptyList(),
-    exec: (ResultSet) -> T,
-  ) = transaction(database) {
-    exec(sql, args, transform = exec)
-  }
+  fun <T> transaction(statement: JdbcTransaction.() -> T) =
+    try {
+      transaction(database, statement = statement)
+    } catch (cause: Throwable) {
+      throw ServiceError(
+        message = "Erro na conexão com banco ou na query.",
+        cause = cause,
+      )
+    }
 }

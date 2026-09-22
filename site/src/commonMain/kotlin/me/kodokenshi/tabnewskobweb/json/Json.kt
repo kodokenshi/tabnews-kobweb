@@ -3,7 +3,8 @@ package me.kodokenshi.tabnewskobweb.json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.int
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -34,7 +35,7 @@ fun buildJson(vararg map: String) = json(*map).toString()
 
 fun String.parseJson() = Json.parse(this)
 
-fun String.parseJsonList() = Json.parseList(this)
+fun String.parseJsonList() = Json.parseList(this) ?: Json.parse(this)?.let { listOf(it) }
 
 class Json(
   root: Map<String, JsonElement> = mapOf(),
@@ -145,7 +146,9 @@ class Json(
   //
   private fun getElement(key: String) = root[key]
 
-  fun getString(key: String) = getElement(key)?.jsonPrimitive?.content
+  fun getString(key: String) = getElement(key)?.jsonPrimitive?.contentOrNull
+
+  fun getInt(key: String) = getElement(key)?.jsonPrimitive?.intOrNull
 
   fun getJson(key: String): Json? = parse(getElement(key) as? JsonObject ?: return null)
   //
@@ -164,9 +167,9 @@ class Json(
     return null
   }
 
-  fun getNestedString(key: String) = getNested(key)?.jsonPrimitive?.content
+  fun getNestedString(key: String) = getNested(key)?.jsonPrimitive?.contentOrNull
 
-  fun getNestedInt(key: String) = getNested(key)?.jsonPrimitive?.int
+  fun getNestedInt(key: String) = getNested(key)?.jsonPrimitive?.intOrNull
   //
 
   private fun toObject() = JsonObject(root)

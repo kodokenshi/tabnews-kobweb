@@ -149,6 +149,11 @@ tasks.withType<Test> {
   }
   addTestListener(
     object : TestListener {
+      override fun beforeSuite(suite: TestDescriptor) {
+        if (suite.parent != null) return
+        println(".")
+      }
+
       override fun afterSuite(
         suite: TestDescriptor,
         result: TestResult,
@@ -218,12 +223,12 @@ tasks.register("runDev") {
   doLast {
     runBlocking {
       try {
-        prepareAndRunProcess("Start secondary services", arrayOf("site:servicesUp"))
-        prepareAndRunProcess("Services wait database", arrayOf("site:servicesWaitDatabase"))
-        prepareAndRunProcess("Start server", arrayOf("site:kobwebStart", "-t"), false)
+        prepareAndRunProcess("Start secondary services", arrayOf("site:servicesUp", "--no-daemon"))
+        prepareAndRunProcess("Services wait database", arrayOf("site:servicesWaitDatabase", "--no-daemon"))
+        prepareAndRunProcess("Start server", arrayOf("site:kobwebStart", "-t", "--no-daemon"), false)
       } finally {
-        prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop"))
-        prepareAndRunProcess("Stop secondary services", arrayOf("site:servicesStop"))
+        prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop", "--no-daemon"))
+        prepareAndRunProcess("Stop secondary services", arrayOf("site:servicesStop", "--no-daemon"))
       }
     }
   }
@@ -232,8 +237,27 @@ tasks.register("stopDev") {
   description = "Stop server and services."
   doLast {
     runBlocking {
-      prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop"))
-      prepareAndRunProcess("Stop secondary services", arrayOf("site:servicesStop"))
+      prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop", "--no-daemon"))
+      prepareAndRunProcess("Stop secondary services", arrayOf("site:servicesStop", "--no-daemon"))
+    }
+  }
+}
+tasks.register("tests") {
+  description = "Execute tests"
+  doLast {
+    runBlocking {
+      prepareAndRunProcess(
+        "Start battery of tests",
+        arrayOf(
+          "site:allTests",
+          "-Dverbose=${project.findProperty("verbose") ?: "false"}",
+          "-x",
+          ":site:jsBrowserTest",
+          "--rerun-tasks",
+          "--no-daemon",
+        ),
+        false,
+      )
     }
   }
 }
@@ -260,12 +284,12 @@ tasks.register("runTests") {
                   "--rerun-tasks",
                 ),
             ).forEachIndexed { index, (name, process) ->
-              val failed = !prepareAndRunProcess(name, process, index != 3)
+              val failed = !prepareAndRunProcess(name, process + "--no-daemon", index != 3)
               if (failed) anyFailed = true
             }
           } finally {
-            prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop"))
-            prepareAndRunProcess("Stop secondary services", arrayOf("site:servicesStop"))
+            prepareAndRunProcess("Stop server", arrayOf("site:kobwebStop", "--no-daemon"))
+            prepareAndRunProcess("Stop secondary services", arrayOf("site:servicesStop", "--no-daemon"))
           }
         }
       }
@@ -370,7 +394,9 @@ private val ignoredLines =
     "* What went wrong:",
     "BUILD SUCCESSFUL",
     "warning workspace-aggregator",
-    "me.kodokenshi.tabnewskobweb.tests.test.TestFailedException at Test.kt",
+    "me.kodokenshi.tabnewskobweb.tests.test.exception.TestFailedException at Test.kt",
+    "To honour the JVM settings for this build a single-use Daemon",
+    "Daemon will be stopped at the end of the build",
   )
 
 private suspend fun runProcess(
