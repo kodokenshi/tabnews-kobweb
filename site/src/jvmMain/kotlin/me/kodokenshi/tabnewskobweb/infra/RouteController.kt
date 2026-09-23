@@ -31,6 +31,7 @@ class RouteController(
       response = cause,
       status = cause.statusCode,
     )
+    cause.printStackTrace()
   }
   private var isAborted = false
 
