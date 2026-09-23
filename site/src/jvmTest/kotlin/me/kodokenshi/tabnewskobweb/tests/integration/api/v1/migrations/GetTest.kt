@@ -18,12 +18,12 @@ class GetTest {
   @Test
   suspend fun test() =
     testContext(this::class, TestConfig.IS_VERBOSE) {
-      describe("GET /api/v1/migrations") {
+      beforeAll {
         waitForAllServices()
+        clearDatabase()
+      }
+      describe("GET /api/v1/migrations") {
         describe("Anonymous user") {
-          describe("Clearing database") {
-            expect(clearDatabase()).toBe(true)
-          }
           repeat(2) {
             describe("Retrieving current migration status $it") {
               val response = client.get("http://localhost:8080/api/v1/migrations")

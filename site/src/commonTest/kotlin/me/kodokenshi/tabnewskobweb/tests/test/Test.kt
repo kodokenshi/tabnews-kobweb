@@ -22,6 +22,14 @@ class Test(
 ) : TestContextScope {
   private var isRunning = false
   private val tests = LinkedHashSet<TestScopeDsl>()
+  private var beforeAll: BeforeAll? = null
+
+  override suspend fun beforeAll(
+    timeout: Duration,
+    op: suspend () -> Unit,
+  ) {
+    beforeAll = BeforeAll(timeout, op)
+  }
 
   override suspend fun describe(
     name: String,
@@ -37,12 +45,21 @@ class Test(
 
     op()
 
+    var overrideFail = false
     val measuredTime =
       measureTime {
+        beforeAll?.let {
+          val test = TestScopeDsl("beforeAll", it.timeout, isVerbose) { it.op() }
+          test.run()
+          if (!test.isPass()) {
+            overrideFail = true
+            return@measureTime
+          }
+        }
         tests.forEach { it.run() }
       }
 
-    val pass = tests.all { it.isPass() }
+    val pass = tests.all { it.isPass() } && !overrideFail
 
     println(
       buildString {

@@ -1,6 +1,7 @@
 package me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database
 
 import me.kodokenshi.tabnewskobweb.database.Database
+import me.kodokenshi.tabnewskobweb.database.migrations.defaultMigrations
 
 fun clearDatabase() =
   Database.transaction {
@@ -14,3 +15,5 @@ fun clearDatabase() =
 	
     tables == 0
   }
+
+fun waitForMigrations() = defaultMigrations().migrate(logInfoOnConsole = false)

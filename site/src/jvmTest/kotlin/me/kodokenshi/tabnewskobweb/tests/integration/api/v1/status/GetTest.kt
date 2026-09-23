@@ -17,8 +17,10 @@ class GetTest {
   @Test
   suspend fun test() =
     testContext(this::class, TestConfig.IS_VERBOSE) {
-      describe("GET /api/v1/status") {
+      beforeAll {
         waitForAllServices()
+      }
+      describe("GET /api/v1/status") {
         describe("Anonymous user") {
           describe("Retrieving current system status") {
             val response = client.get("http://localhost:8080/api/v1/status")

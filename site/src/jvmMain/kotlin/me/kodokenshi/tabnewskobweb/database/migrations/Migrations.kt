@@ -9,6 +9,15 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.io.File
 import java.security.MessageDigest
 
+fun defaultMigrations() =
+  Migrations(
+    driver = me.kodokenshi.tabnewskobweb.database.Database.POSTGRES_DRIVER,
+    databaseURL = me.kodokenshi.tabnewskobweb.database.Database.POSTGRES_URL,
+    databaseUser = me.kodokenshi.tabnewskobweb.database.Database.POSTGRES_USER,
+    databasePassword = me.kodokenshi.tabnewskobweb.database.Database.POSTGRES_PASSWORD,
+    migrationsPath = "infra/migrations",
+  )
+
 class Migrations(
   private val driver: String,
   private val databaseURL: String,
@@ -81,21 +90,24 @@ class Migrations(
     }
   }
 
-  fun migrate(dryRun: Boolean = false) {
+  fun migrate(
+    dryRun: Boolean = false,
+    logInfoOnConsole: Boolean = true,
+  ): Migrations {
     migratedMigrations.clear()
     val prefix = "[MIGRATIONS]${if (dryRun) " [DRY-RUN]" else ""}"
 		
     "$prefix Initiating migrations...".also {
       log.append(it)
-      println(it)
+      if (logInfoOnConsole) println(it)
     }
 		
     if (localMigrations.isEmpty()) {
       "$prefix There's no local migration file. Migrations aborted.".also {
         log.append("\n$it")
-        println(it)
+        if (logInfoOnConsole) println(it)
       }
-      return
+      return this
     }
 		
     val database =
@@ -115,14 +127,13 @@ class Migrations(
         }
       var migrated = 0
       localMigrations.forEach { migrationFile ->
-				
-        if (migrateFile(migrationFile, migratedMigrations, dryRun, prefix)) migrated++
+        if (migrateFile(migrationFile, migratedMigrations, dryRun, prefix, logInfoOnConsole)) migrated++
       }
 			
       if (migrated == 0) {
         "$prefix Complete. *Everything is up-to-date.*".also {
           log.append("\n$it")
-          println(it)
+          if (logInfoOnConsole) println(it)
         }
         return@transaction
       }
@@ -131,15 +142,16 @@ class Migrations(
         rollback()
         "$prefix Complete. *No changes were saved.*".also {
           log.append("\n$it")
-          println(it)
+          if (logInfoOnConsole) println(it)
         }
       } else {
         "$prefix $migrated file(s) migrated. Complete. *Changes have been saved.*".also {
           log.append("\n$it")
-          println(it)
+          if (logInfoOnConsole) println(it)
         }
       }
     }
+    return this
   }
 
   private fun JdbcTransaction.migrateFile(
@@ -147,6 +159,7 @@ class Migrations(
     migratedMigrations: Map<Long, String>,
     dryRun: Boolean,
     prefix: String,
+    logInfoOnConsole: Boolean,
   ): Boolean {
     val migrationName = "'${migrationFile.version}' '${
       migrationFile.description.ifBlank { "undescribed" }
@@ -173,12 +186,12 @@ class Migrations(
     if (dryRun) {
       "$prefix Migration $migrationName script:\n${migrationFile.script}".also {
         log.append("\n$it")
-        println(it)
+        if (logInfoOnConsole) println(it)
       }
     } else {
       "$prefix Migrating migration: $migrationName".also {
         log.append("\n$it")
-        println(it)
+        if (logInfoOnConsole) println(it)
       }
 			
       exec(migrationFile.script)

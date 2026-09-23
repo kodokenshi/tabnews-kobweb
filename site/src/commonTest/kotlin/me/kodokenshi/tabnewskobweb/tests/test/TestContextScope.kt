@@ -9,4 +9,9 @@ interface TestContextScope {
     testTimeout: Duration = 60.seconds,
     op: suspend TestScope.() -> Unit,
   )
+
+  suspend fun beforeAll(
+    timeout: Duration = 60.seconds,
+    op: suspend () -> Unit,
+  )
 }

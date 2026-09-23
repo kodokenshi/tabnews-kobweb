@@ -16,8 +16,10 @@ class PostTest {
   @Test
   suspend fun test() =
     testContext(this::class, TestConfig.IS_VERBOSE) {
-      describe("POST /api/v1/status") {
+      beforeAll {
         waitForAllServices()
+      }
+      describe("POST /api/v1/status") {
         describe("Anonymous user") {
           describe("Retrieving current system status") {
             val response = client.post("http://localhost:8080/api/v1/status")

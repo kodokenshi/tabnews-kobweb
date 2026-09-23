@@ -18,12 +18,13 @@ class PostTest {
   @Test
   suspend fun test() =
     testContext(this::class, TestConfig.IS_VERBOSE) {
+      beforeAll {
+        waitForAllServices()
+        clearDatabase()
+      }
       describe("POST /api/v1/migrations") {
         waitForAllServices()
         describe("Anonymous user") {
-          describe("Clearing database") {
-            expect(clearDatabase()).toBe(true)
-          }
           repeat(2) {
             describe(if (it == 0) "Running pending migrations" else "Retrieving current migrations status") {
               val response =
