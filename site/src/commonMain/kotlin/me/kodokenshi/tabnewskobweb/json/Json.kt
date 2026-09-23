@@ -293,7 +293,10 @@ class Json(
 
   fun getNestedBoolean(key: String) = getRootNestedElement(key)?.jsonPrimitive?.booleanOrNull
 
-  fun getNestedBooleanList(key: String) = getRootNestedElement(key)?.jsonArray?.mapNotNull { it.jsonPrimitive.booleanOrNull }
+  fun getNestedBooleanList(key: String) =
+    getRootNestedElement(key)?.jsonArray?.mapNotNull {
+      it.jsonPrimitive.booleanOrNull
+    }
 
   fun getNestedInt(key: String) = getRootNestedElement(key)?.jsonPrimitive?.intOrNull
 
@@ -305,15 +308,24 @@ class Json(
 
   fun getNestedDouble(key: String) = getRootNestedElement(key)?.jsonPrimitive?.doubleOrNull
 
-  fun getNestedDoubleList(key: String) = getRootNestedElement(key)?.jsonArray?.mapNotNull { it.jsonPrimitive.doubleOrNull }
+  fun getNestedDoubleList(key: String) =
+    getRootNestedElement(key)?.jsonArray?.mapNotNull {
+      it.jsonPrimitive.doubleOrNull
+    }
 
   fun getNestedFloat(key: String) = getRootNestedElement(key)?.jsonPrimitive?.floatOrNull
 
-  fun getNestedFloatList(key: String) = getRootNestedElement(key)?.jsonArray?.mapNotNull { it.jsonPrimitive.floatOrNull }
+  fun getNestedFloatList(key: String) =
+    getRootNestedElement(key)?.jsonArray?.mapNotNull {
+      it.jsonPrimitive.floatOrNull
+    }
 
   fun getNestedString(key: String) = getRootNestedElement(key)?.jsonPrimitive?.contentOrNull
 
-  fun getNestedStringList(key: String) = getRootNestedElement(key)?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull }
+  fun getNestedStringList(key: String) =
+    getRootNestedElement(key)?.jsonArray?.mapNotNull {
+      it.jsonPrimitive.contentOrNull
+    }
 
   fun getNestedElement(key: String) = getRootNestedElement(key)
 
