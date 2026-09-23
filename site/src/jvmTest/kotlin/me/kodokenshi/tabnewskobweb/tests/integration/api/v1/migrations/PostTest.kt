@@ -23,7 +23,6 @@ class PostTest {
         clearDatabase()
       }
       describe("POST /api/v1/migrations") {
-        waitForAllServices()
         describe("Anonymous user") {
           repeat(2) {
             describe(if (it == 0) "Running pending migrations" else "Retrieving current migrations status") {

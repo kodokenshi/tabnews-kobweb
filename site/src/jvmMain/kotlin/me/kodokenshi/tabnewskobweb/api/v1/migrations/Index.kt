@@ -8,7 +8,7 @@ import me.kodokenshi.tabnewskobweb.infra.createRouter
 import me.kodokenshi.tabnewskobweb.infra.setResponse
 
 @Api("/v1/migrations")
-fun status(ctx: ApiContext) {
+suspend fun migrations(ctx: ApiContext) {
   createRouter(ctx)
     .routing {
       get {

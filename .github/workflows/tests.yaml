@@ -24,4 +24,4 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - run: chmod +x gradlew
-      - run: ./gradlew site:runTests
+      - run: ./gradlew site:runTests -Pverbose=true --no-daemon
