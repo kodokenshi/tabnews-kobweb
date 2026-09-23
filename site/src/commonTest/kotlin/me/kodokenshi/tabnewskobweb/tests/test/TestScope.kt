@@ -2,6 +2,7 @@ package me.kodokenshi.tabnewskobweb.tests.test
 
 import kotlinx.coroutines.withTimeoutOrNull
 import me.kodokenshi.tabnewskobweb.tests.test.exception.TestException
+import me.kodokenshi.tabnewskobweb.tests.test.exception.TestFailedException
 import me.kodokenshi.tabnewskobweb.tests.test.exception.TestTimeoutException
 import kotlin.time.Duration
 import kotlin.time.measureTime
@@ -14,6 +15,14 @@ class TestScopeDsl(
 ) : TestScope {
   private val childTests = LinkedHashSet<TestScopeDsl>()
   private var result: TestResult? = null
+  private var beforeAll: BeforeAll? = null
+
+  override suspend fun beforeAll(
+    timeout: Duration,
+    op: suspend () -> Unit,
+  ) {
+    beforeAll = BeforeAll(timeout, op)
+  }
 
   override suspend fun describe(
     name: String,
@@ -90,6 +99,11 @@ class TestScopeDsl(
       measureTime {
         try {
           withTimeoutOrNull(testTimeout) {
+            beforeAll?.let {
+              val test = TestScopeDsl("$name - beforeAll", it.timeout, isVerbose) { it.op() }
+              test.run()
+              if (test.result?.pass != true) throw TestFailedException()
+            }
             test(this@TestScopeDsl)
           } ?: throw TestTimeoutException(testTimeout)
           pass = true
