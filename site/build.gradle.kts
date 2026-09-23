@@ -149,8 +149,13 @@ tasks.withType<Test> {
   }
   addTestListener(
     object : TestListener {
-      override fun beforeSuite(suite: TestDescriptor) {
+     /* override fun beforeSuite(suite: TestDescriptor) {
         if (suite.parent != null) return
+        println(".")
+      }*/
+
+      override fun beforeTest(suite: TestDescriptor) {
+        if (suite.parent == null) return
         println(".")
       }
 

@@ -80,6 +80,8 @@ class Json(
 
   private val root = root.toMutableMap()
 
+  fun size() = root.size
+
   //
   private fun insert(
     key: String,
