@@ -200,7 +200,6 @@ class Migrations(
         it[version] = migrationFile.version
         it[author] = migrationFile.author
         it[description] = migrationFile.description
-        it[script] = migrationFile.script
         it[checksum] = migrationFile.checksum
         it[installedOn] = System.currentTimeMillis()
       }

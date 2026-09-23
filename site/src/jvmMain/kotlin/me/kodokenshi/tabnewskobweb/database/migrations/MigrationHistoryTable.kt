@@ -6,7 +6,6 @@ object MigrationHistoryTable : Table("kodokenshi_migration_history") {
   val version = long("version").uniqueIndex()
   val author = varchar("author", 50)
   val description = varchar("description", 255)
-  val script = varchar("script", 255)
   val checksum = varchar("checksum", 64)
   val installedOn = long("installed_on")
 	

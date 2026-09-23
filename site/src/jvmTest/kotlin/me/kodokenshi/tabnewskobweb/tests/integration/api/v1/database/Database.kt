@@ -2,6 +2,7 @@ package me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integratio
 
 import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.database.migrations.defaultMigrations
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.TestConfig
 
 fun clearDatabase() =
   Database.transaction {
@@ -16,4 +17,4 @@ fun clearDatabase() =
     tables == 0
   }
 
-fun waitForMigrations() = defaultMigrations().migrate(logInfoOnConsole = false)
+fun waitForMigrations() = defaultMigrations().migrate(logInfoOnConsole = TestConfig.IS_VERBOSE)
