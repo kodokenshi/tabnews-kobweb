@@ -1,6 +1,7 @@
 package me.kodokenshi.tabnewskobweb.database
 
 import io.github.cdimascio.dotenv.dotenv
+import me.kodokenshi.tabnewskobweb.infra.InternalServerError
 import me.kodokenshi.tabnewskobweb.infra.ServiceError
 import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -42,14 +43,14 @@ object Database {
 
   fun version() =
     transaction {
-      exec("show server_version") {
+      exec("show server_version;") {
         if (it.next()) it.getString(1) else null
       }
     }
 
   fun maxConnections() =
     transaction {
-      exec("show max_connections") {
+      exec("show max_connections;") {
         if (it.next()) it.getInt(1) else 0
       }
     }
@@ -57,7 +58,7 @@ object Database {
   fun openedConnections() =
     transaction {
       exec(
-        stmt = "select count(*)::int from pg_stat_activity where datname = ?",
+        stmt = "select count(*)::int from pg_stat_activity where datname = ?;",
         args = listOf(VarCharColumnType() to env.get("POSTGRES_DB")),
       ) {
         if (it.next()) it.getInt(1) else 0
@@ -68,7 +69,7 @@ object Database {
     try {
       transaction(database, statement = statement)
     } catch (cause: Throwable) {
-      throw ServiceError(
+      throw cause as? InternalServerError ?: ServiceError(
         message = "Erro na conexão com banco ou na query.",
         cause = cause,
       )

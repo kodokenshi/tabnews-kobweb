@@ -34,3 +34,12 @@ class ServiceError(
     statusCode = HttpStatusCode.ServiceUnavailable,
     cause = cause,
   )
+
+class ValidationError(
+  message: String = "Um erro de validação ocorreu.",
+  action: String = "Ajuste os dados enviados e tente novamente.",
+) : InternalServerError(
+    message = message,
+    action = action,
+    statusCode = HttpStatusCode.BadRequest,
+  )

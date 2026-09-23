@@ -10,7 +10,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 @Api("/v1/status")
-fun status(ctx: ApiContext) {
+suspend fun status(ctx: ApiContext) {
   createRouter(ctx)
     .routing {
       get {

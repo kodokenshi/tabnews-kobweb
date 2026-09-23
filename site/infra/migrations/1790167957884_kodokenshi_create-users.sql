@@ -6,4 +6,4 @@ create table users
     passwd     varchar(72)  not null,
     created_at timestamptz      default now(),
     updated_at timestamptz      default now()
-)
+);
