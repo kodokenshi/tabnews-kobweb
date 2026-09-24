@@ -23,19 +23,29 @@ object User {
     val values =
       ctx.req.body
         ?.text()
-        ?.parseJson() ?: return null
+        ?.parseJson() ?: throw ValidationError()
+
+    hashPasswordInValues(values)
 
     val username = values.getString("username")
     val email = values.getString("email")
-    val passwd = values.getString("passwd")
+    val password = values.getString("passwd") // nesse ponto, já deve estar validado
 
     validateUniqueUsername(username)
     validateUniqueEmail(email)
-    validatePassword(passwd)
 
     // nesse ponto, nada é nulo
-    val newUser = runInsertUserQuery(username!!, email!!, passwd!!)
+    val newUser = runInsertUserQuery(username!!, email!!, password!!)
     return newUser
+  }
+
+  private fun hashPasswordInValues(values: Json) {
+    val password = values.getString("passwd")
+		
+    validatePassword(password)
+		
+    val hashedPassword = Password.hash(password!!) // nesse ponto, não é nulo
+    values.put("passwd", hashedPassword)
   }
 
   private fun validateUniqueUsername(username: String?) {
@@ -44,7 +54,7 @@ object User {
   }
 
   private fun validateUsername(username: String?) {
-    if (username == null) {
+    if (username.isNullOrBlank()) {
       throw ValidationError(
         message = "Nenhum username informado.",
         action = "Informe um username e tente novamente.",
@@ -60,8 +70,8 @@ object User {
 
   private fun validateUniqueEmail(email: String?) = validateField("email", email)
 
-  private fun validatePassword(passwd: String?) {
-    if (passwd == null) {
+  private fun validatePassword(password: String?) {
+    if (password.isNullOrBlank()) {
       throw ValidationError(
         message = "Nenhuma senha informada.",
         action = "Informe uma senha para realizar o cadastro.",
@@ -73,7 +83,7 @@ object User {
     field: String,
     value: String?,
   ) {
-    if (value == null) {
+    if (value.isNullOrBlank()) {
       throw ValidationError(
         message = "Nenhum $field informado.",
         action = "Informe um $field para realizar o cadastro.",
@@ -95,11 +105,11 @@ object User {
   private fun runInsertUserQuery(
     username: String,
     email: String,
-    passwd: String,
+    password: String,
   ) = query(
     stmt = "insert into users (username, email, passwd) values (?, ?, ?) returning *;",
     explicitStatementType = StatementType.SELECT,
-    values = listOf(username, email, passwd),
+    values = listOf(username, email, password),
   )
 
   private fun runSelectUsernameQuery(username: String) =

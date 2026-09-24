@@ -56,7 +56,6 @@ class GetTest {
             expect(extractUuidVersion(body.getString("id"))).toBe(4)
             expect(body.getString("username")).toBe("kodo")
             expect(body.getString("email")).toBe("kodo@email.com")
-            expect(body.getString("passwd")).toBe("senha123")
             expect(parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
             expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
           }
@@ -69,7 +68,6 @@ class GetTest {
             expect(extractUuidVersion(body.getString("id"))).toBe(4)
             expect(body.getString("username")).toBe("kodo")
             expect(body.getString("email")).toBe("kodo@email.com")
-            expect(body.getString("passwd")).toBe("senha123")
             expect(parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
             expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
           }

@@ -401,7 +401,7 @@ private val ignoredLines =
     "* What went wrong:",
     "BUILD SUCCESSFUL",
     "warning workspace-aggregator",
-    "me.kodokenshi.tabnewskobweb.tests.test.exception.TestFailedException at Test.kt",
+    "me.kodokenshi.tabnewskobweb.tests.test.exception.TestFailedException at",
     "To honour the JVM settings for this build a single-use Daemon",
     "Daemon will be stopped at the end of the build",
   )

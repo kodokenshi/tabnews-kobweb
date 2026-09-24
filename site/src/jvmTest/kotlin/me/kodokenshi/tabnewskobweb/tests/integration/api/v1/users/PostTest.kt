@@ -15,6 +15,8 @@ import me.kodokenshi.tabnewskobweb.json.parseJson
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.TestConfig
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.clearDatabase
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.waitForMigrations
+import me.kodokenshi.tabnewskobweb.models.Password
+import me.kodokenshi.tabnewskobweb.models.User
 import me.kodokenshi.tabnewskobweb.tests.services.client
 import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
@@ -52,9 +54,14 @@ class PostTest {
             expect(extractUuidVersion(body.getString("id"))).toBe(4)
             expect(body.getString("username")).toBe("kodo")
             expect(body.getString("email")).toBe("kodo@email.com")
-            expect(body.getString("passwd")).toBe("senha123")
             expect(parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
             expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
+
+            val userInDatabase = User.findOneByUsername("kodo")
+            val storedPassword = userInDatabase.getString("passwd")
+            expect(Password.compare("senha123", storedPassword)).toBe(true)
+            expect(Password.compare("Senha123", storedPassword)).toBe(false)
+            expect(Password.compare("SenhaErrada", storedPassword)).toBe(false)
           }
 
           describe("With invalid 'username'") {
