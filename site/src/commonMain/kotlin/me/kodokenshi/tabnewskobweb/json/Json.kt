@@ -121,6 +121,10 @@ class Json(
 
   fun size() = root.size
 
+  fun isEmpty() = root.isEmpty()
+
+  fun isNotEmpty() = root.isNotEmpty()
+
   //
   private fun insert(
     key: String,
