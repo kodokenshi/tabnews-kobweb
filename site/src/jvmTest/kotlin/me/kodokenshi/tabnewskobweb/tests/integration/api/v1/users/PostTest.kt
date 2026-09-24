@@ -57,6 +57,63 @@ class PostTest {
             expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
           }
 
+          describe("With invalid 'username'") {
+            val response =
+              client.post("http://localhost:8080/api/v1/users") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                  buildJson {
+                    put("username", "")
+                    put("email", "kodo@email.com")
+                    put("passwd", "senha123")
+                  },
+                )
+              }
+            expect(response.status).toBe(HttpStatusCode.BadRequest)
+            val response2 =
+              client.post("http://localhost:8080/api/v1/users") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                  buildJson {
+                    put("username", "kodokodokodokodokodokodokodokodo")
+                    put("email", "kodo@email.com")
+                    put("passwd", "senha123")
+                  },
+                )
+              }
+            expect(response2.status).toBe(HttpStatusCode.BadRequest)
+          }
+
+          describe("With invalid 'email'") {
+            val response =
+              client.post("http://localhost:8080/api/v1/users") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                  buildJson {
+                    put("username", "kodo")
+                    put("email", "")
+                    put("passwd", "senha123")
+                  },
+                )
+              }
+            expect(response.status).toBe(HttpStatusCode.BadRequest)
+          }
+
+          describe("With invalid 'passwd'") {
+            val response =
+              client.post("http://localhost:8080/api/v1/users") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                  buildJson {
+                    put("username", "kodo")
+                    put("email", "kodo@email.com")
+                    put("passwd", "")
+                  },
+                )
+              }
+            expect(response.status).toBe(HttpStatusCode.BadRequest)
+          }
+
           describe("With duplicated 'username'") {
             val response =
               client.post("http://localhost:8080/api/v1/users") {

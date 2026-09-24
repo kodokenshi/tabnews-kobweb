@@ -84,6 +84,11 @@ class GetTest {
             expect(body.getString("action")).toBe("Verifique se o username está correto.")
             expect(body.getInt("status_code")).toBe(HttpStatusCode.NotFound.value)
           }
+
+          describe("With invalid 'username'") {
+            val response = client.get("http://localhost:8080/api/v1/users/kodokodokodokodokodokodokodokodo")
+            expect(response.status).toBe(HttpStatusCode.BadRequest)
+          }
         }
       }
     }
