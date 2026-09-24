@@ -44,13 +44,52 @@ fun String.parseJson() = Json.parse(this)
 
 fun String.parseJsonList() = Json.parseList(this) ?: Json.parse(this)?.let { listOf(it) }
 
-fun Map<String, JsonElement>.parseJson() = Json.parse(this)
+fun Map<String, Any>.parseJson() = Json.parse(this)
+
+fun Any?.toJsonElement(): JsonElement =
+  when (this) {
+    null -> {
+      JsonNull
+    }
+
+    is JsonElement -> {
+      this
+    }
+
+    is Boolean -> {
+      JsonPrimitive(this)
+    }
+
+    is Number -> {
+      JsonPrimitive(this)
+    }
+
+    is String -> {
+      JsonPrimitive(this)
+    }
+
+    is Map<*, *> -> {
+      JsonObject(
+        this.entries.associate { (key, value) ->
+          key.toString() to value.toJsonElement()
+        },
+      )
+    }
+
+    is List<*> -> {
+      JsonArray(this.map { it.toJsonElement() })
+    }
+
+    else -> {
+      JsonPrimitive(toString())
+    }
+  }
 
 class Json(
   root: Map<String, JsonElement> = mapOf(),
 ) {
   companion object {
-    fun parse(map: Map<String, JsonElement>) = Json(map)
+    fun parse(map: Map<String, Any>) = Json(map.entries.associate { it.key to it.value.toJsonElement() })
 
     fun parse(string: String): Json? =
       try {
