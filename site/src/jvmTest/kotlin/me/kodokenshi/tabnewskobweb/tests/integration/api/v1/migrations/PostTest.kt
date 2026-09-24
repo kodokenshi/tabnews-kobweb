@@ -5,19 +5,18 @@ import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import me.kodokenshi.tabnewskobweb.json.parseJsonList
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.TestConfig
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.clearDatabase
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.testContext
 import me.kodokenshi.tabnewskobweb.tests.services.client
 import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toNotBeNull
-import me.kodokenshi.tabnewskobweb.tests.test.testContext
 import org.junit.jupiter.api.Test
 
 class PostTest {
   @Test
   suspend fun test() =
-    testContext(this::class, TestConfig.IS_VERBOSE) {
+    testContext(this::class) {
       beforeAll {
         waitForAllServices()
         clearDatabase()
@@ -39,7 +38,7 @@ class PostTest {
                   HttpStatusCode.OK
                 },
               )
-							
+								
               val body = expect(response.bodyAsText().parseJsonList()).toNotBeNull()
               expect(body.isEmpty()).toBe(it != 0)
             }
