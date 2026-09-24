@@ -121,6 +121,8 @@ kotlin {
     }
 		
     jvmMain.dependencies {
+      implementation("org.mindrot:jbcrypt:0.4")
+			
       compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime
       implementation("io.ktor:ktor-client-cio:3.6.0")
 			
