@@ -6,7 +6,6 @@ import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.infra.NotFoundError
 import me.kodokenshi.tabnewskobweb.infra.ValidationError
 import me.kodokenshi.tabnewskobweb.json.Json
-import me.kodokenshi.tabnewskobweb.json.buildJson
 import me.kodokenshi.tabnewskobweb.json.json
 import me.kodokenshi.tabnewskobweb.json.parseJson
 import me.kodokenshi.tabnewskobweb.json.toJsonElement
