@@ -3,10 +3,16 @@ package me.kodokenshi.tabnewskobweb.database
 import me.kodokenshi.tabnewskobweb.infra.InternalServerError
 import me.kodokenshi.tabnewskobweb.infra.ServiceError
 import me.kodokenshi.tabnewskobweb.infra.env
+import org.jetbrains.exposed.v1.core.UuidColumnType
 import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import kotlin.uuid.Uuid
+
+fun varCharColumn(value: String) = VarCharColumnType() to value
+
+fun uuidColumn(value: String) = UuidColumnType() to Uuid.parse(value)
 
 object Database {
   val POSTGRES_URL get() =

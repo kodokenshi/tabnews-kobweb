@@ -119,11 +119,19 @@ class Json(
 
   private val root = root.toMutableMap()
 
+  fun spread(json: Json) {
+    json.root.forEach { (key, value) ->
+      root[key] = value
+    }
+  }
+
   fun size() = root.size
 
   fun isEmpty() = root.isEmpty()
 
   fun isNotEmpty() = root.isNotEmpty()
+
+  fun contains(key: String) = root.containsKey(key)
 
   //
   private fun insert(

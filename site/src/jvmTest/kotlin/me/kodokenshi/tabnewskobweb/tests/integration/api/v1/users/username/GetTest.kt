@@ -1,27 +1,19 @@
 package me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.username
 
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.parseOrNull
-import kotlinx.datetime.toInstant
-import me.kodokenshi.tabnewskobweb.json.buildJson
 import me.kodokenshi.tabnewskobweb.json.parseJson
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.clearDatabase
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.waitForMigrations
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.testContext
-import me.kodokenshi.tabnewskobweb.tests.services.client
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.createUser
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.extractUuidVersion
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.findUser
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.parsePostgresTimestamp
 import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toNotBeNull
 import org.junit.jupiter.api.Test
-import kotlin.uuid.Uuid
 
 class GetTest {
   @Test
@@ -35,44 +27,47 @@ class GetTest {
       describe("GET /api/v1/users/[username]") {
         describe("Anonymous user") {
           describe("With exact case match") {
-            val rem =
-              client.post("http://localhost:8080/api/v1/users") {
-                contentType(ContentType.Application.Json)
-                setBody(
-                  buildJson {
-                    put("username", "kodo")
-                    put("email", "kodo@email.com")
-                    put("passwd", "senha123")
-                  },
-                )
-              }
-            expect(rem.status).toBe(HttpStatusCode.Created)
+            expect(
+              createUser(
+                username = "exactUser",
+                email = "exact.user@email.com",
+                password = "senha123",
+              ).status,
+            ).toBe(HttpStatusCode.Created)
 	
-            val response = client.get("http://localhost:8080/api/v1/users/kodo")
+            val response = findUser("exactUser")
             expect(response.status).toBe(HttpStatusCode.OK)
 	
             val body = expect(response.bodyAsText().parseJson()).toNotBeNull()
             expect(extractUuidVersion(body.getString("id"))).toBe(4)
-            expect(body.getString("username")).toBe("kodo")
-            expect(body.getString("email")).toBe("kodo@email.com")
+            expect(body.getString("username")).toBe("exactUser")
+            expect(body.getString("email")).toBe("exact.user@email.com")
             expect(parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
             expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
           }
 	
           describe("With case mismatch") {
-            val response = client.get("http://localhost:8080/api/v1/users/KodO")
+            expect(
+              createUser(
+                username = "mismatchUser",
+                email = "mismatch.user@email.com",
+                password = "senha123",
+              ).status,
+            ).toBe(HttpStatusCode.Created)
+						
+            val response = findUser("MisMATCHusER")
             expect(response.status).toBe(HttpStatusCode.OK)
 	
             val body = expect(response.bodyAsText().parseJson()).toNotBeNull()
             expect(extractUuidVersion(body.getString("id"))).toBe(4)
-            expect(body.getString("username")).toBe("kodo")
-            expect(body.getString("email")).toBe("kodo@email.com")
+            expect(body.getString("username")).toBe("mismatchUser")
+            expect(body.getString("email")).toBe("mismatch.user@email.com")
             expect(parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
             expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
           }
 	
-          describe("With nonexistent username") {
-            val response = client.get("http://localhost:8080/api/v1/users/kenshi")
+          describe("With nonexistent 'username'") {
+            val response = findUser("nonexistentuser")
             expect(response.status).toBe(HttpStatusCode.NotFound)
 	
             val body = expect(response.bodyAsText().parseJson()).toNotBeNull()
@@ -83,22 +78,10 @@ class GetTest {
           }
 	
           describe("With invalid 'username'") {
-            val response = client.get("http://localhost:8080/api/v1/users/kodokodokodokodokodokodokodokodo")
+            val response = findUser("useruseruseruseruseruseruseruser")
             expect(response.status).toBe(HttpStatusCode.BadRequest)
           }
         }
       }
     }
 }
-
-private fun extractUuidVersion(uuid: String?) =
-  Uuid.parseOrNull(uuid.orEmpty())?.toLongs { mostSignificantBits, _ ->
-    (mostSignificantBits shr 12) and 0xF
-  }
-
-private fun parsePostgresTimestamp(timestamp: String?) =
-  timestamp
-    ?.replace(' ', 'T')
-    ?.let {
-      LocalDateTime.parseOrNull(it)
-    }?.toInstant(TimeZone.UTC)

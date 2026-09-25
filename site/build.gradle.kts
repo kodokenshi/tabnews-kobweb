@@ -184,7 +184,7 @@ tasks.withType<Test> {
             append(".\n. Tests: ")
             append(
               buildString {
-                val failed = result.failedTestCount - skipped
+                val failed = result.failedTestCount
                 val passed = result.successfulTestCount - skipped
                 val total = result.testCount
                 val skipped = result.skippedTestCount + skipped
