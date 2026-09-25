@@ -5,7 +5,7 @@ import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.measureTime
 
-suspend fun testContext(
+suspend fun commonTestContext(
   owner: KClass<*>,
   isVerbose: Boolean,
   op: suspend TestContextScope.() -> Unit,
@@ -61,6 +61,7 @@ class Test(
 
     val pass = tests.all { it.isPass() } && !overrideFail
 
+    if (isVerbose) println(".")
     println(
       buildString {
         append(". ")

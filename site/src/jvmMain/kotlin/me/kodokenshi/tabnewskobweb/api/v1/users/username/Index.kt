@@ -15,5 +15,10 @@ suspend fun users(ctx: ApiContext) {
         val userFound = User.findOneByUsername(username)
         ctx.setResponse(userFound)
       }
+      patch {
+        val username = ctx.req.params["username"]
+        val updatedUser = User.update(username, ctx)
+        ctx.setResponse(updatedUser)
+      }
     }
 }

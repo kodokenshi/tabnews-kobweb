@@ -121,6 +121,8 @@ kotlin {
     }
 		
     jvmMain.dependencies {
+      implementation("org.mindrot:jbcrypt:0.4")
+			
       compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime
       implementation("io.ktor:ktor-client-cio:3.6.0")
 			
@@ -147,16 +149,24 @@ tasks.withType<Test> {
     showCauses = true
     showStackTraces = true
   }
+  val customFilter = System.getProperty("filter", "").split(",").map { it.trim() }
   addTestListener(
     object : TestListener {
-     /* override fun beforeSuite(suite: TestDescriptor) {
-        if (suite.parent != null) return
-        println(".")
-      }*/
+      private var skipped = 0
 
-      override fun beforeTest(suite: TestDescriptor) {
-        if (suite.parent == null) return
-        println(".")
+      override fun afterTest(
+        suite: TestDescriptor,
+        result: TestResult,
+      ) {
+        if (customFilter.isEmpty()) return
+
+        val clazz = suite.className ?: return
+        if (customFilter.none {
+            clazz.contains(it, true)
+          }
+        ) {
+          skipped++
+        }
       }
 
       override fun afterSuite(
@@ -175,9 +185,9 @@ tasks.withType<Test> {
             append(
               buildString {
                 val failed = result.failedTestCount
-                val passed = result.successfulTestCount
+                val passed = result.successfulTestCount - skipped
                 val total = result.testCount
-                val skipped = result.skippedTestCount
+                val skipped = result.skippedTestCount + skipped
 
                 if (failed > 0) append("$failText$failed failed$reset")
                 if (passed > 0) {
@@ -206,6 +216,7 @@ tasks.withType<Test> {
     },
   )
   systemProperty("verbose", System.getProperty("verbose", "false"))
+  systemProperty("filter", System.getProperty("filter", ""))
 }
 
 tasks.register("servicesWaitDatabase") {
@@ -256,6 +267,7 @@ tasks.register("tests") {
         arrayOf(
           "site:allTests",
           "-Dverbose=${project.findProperty("verbose") ?: "false"}",
+          "-Dfilter=${project.findProperty("filter") ?: ""}",
           "-x",
           ":site:jsBrowserTest",
           "--rerun-tasks",
@@ -284,6 +296,7 @@ tasks.register("runTests") {
                 arrayOf(
                   "site:allTests",
                   "-Dverbose=${project.findProperty("verbose") ?: "false"}",
+                  "-Dfilter=${project.findProperty("filter") ?: ""}",
                   "-x",
                   ":site:jsBrowserTest",
                   "--rerun-tasks",
@@ -399,7 +412,8 @@ private val ignoredLines =
     "* What went wrong:",
     "BUILD SUCCESSFUL",
     "warning workspace-aggregator",
-    "me.kodokenshi.tabnewskobweb.tests.test.exception.TestFailedException at Test.kt",
+    "me.kodokenshi.tabnewskobweb.tests.test.exception.TestFailedException at",
+    "me.kodokenshi.tabnewskobweb.tests.test.exception.TestSkippedException at",
     "To honour the JVM settings for this build a single-use Daemon",
     "Daemon will be stopped at the end of the build",
   )
