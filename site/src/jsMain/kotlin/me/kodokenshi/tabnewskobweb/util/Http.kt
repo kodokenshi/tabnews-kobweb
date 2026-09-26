@@ -3,7 +3,6 @@ package me.kodokenshi.tabnewskobweb.util
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
-import me.kodokenshi.tabnewskobweb.json.JsonArrayReader
 import me.kodokenshi.tabnewskobweb.json.toJsonArrayOrNull
 
 val client by lazy { HttpClient() }
