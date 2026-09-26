@@ -5,7 +5,7 @@ import com.varabyte.kobweb.api.ApiContext
 import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.infra.createRouter
 import me.kodokenshi.tabnewskobweb.infra.setResponse
-import me.kodokenshi.tabnewskobweb.json.buildJson
+import me.kodokenshi.tabnewskobweb.json.jsonBuild
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -20,12 +20,14 @@ suspend fun status(ctx: ApiContext) {
         val databaseOpenedConnections = Database.openedConnections()
 
         ctx.setResponse(
-          buildJson {
-            put("updated_at", updatedAt)
-            putNested("dependencies.database") {
-              put("version", databaseVersion)
-              put("opened_connections", databaseOpenedConnections)
-              put("max_connections", databaseMaxConnections)
+          jsonBuild {
+            "updated_at" eq updatedAt
+            "dependencies" {
+              "database" {
+                "version" eq databaseVersion
+                "opened_connections" eq databaseOpenedConnections
+                "max_connections" eq databaseMaxConnections
+              }
             }
           },
         )

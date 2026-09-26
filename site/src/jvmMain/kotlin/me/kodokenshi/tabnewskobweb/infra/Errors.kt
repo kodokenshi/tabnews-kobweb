@@ -1,7 +1,7 @@
 package me.kodokenshi.tabnewskobweb.infra
 
 import io.ktor.http.HttpStatusCode
-import me.kodokenshi.tabnewskobweb.json.buildJson
+import me.kodokenshi.tabnewskobweb.json.jsonBuild
 
 open class InternalServerError(
   message: String = "Um erro interno não esperado aconteceu.",
@@ -10,11 +10,11 @@ open class InternalServerError(
   val statusCode: HttpStatusCode = HttpStatusCode.InternalServerError,
 ) : Throwable(message, cause) {
   override fun toString() =
-    buildJson {
-      put("name", this@InternalServerError.javaClass.simpleName)
-      put("message", message)
-      put("action", action)
-      put("status_code", statusCode.value)
+    jsonBuild {
+      "name" eq this@InternalServerError.javaClass.simpleName
+      "message" eq message
+      "action" eq action
+      "status_code" eq statusCode.value
     }
 }
 

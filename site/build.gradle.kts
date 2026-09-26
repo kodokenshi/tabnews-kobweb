@@ -121,6 +121,7 @@ kotlin {
     }
 		
     jvmMain.dependencies {
+      implementation("net.datafaker:datafaker:2.7.0")
       implementation("org.mindrot:jbcrypt:0.4")
 			
       compileOnly(libs.kobweb.api) // Provided by Kobweb backend at runtime

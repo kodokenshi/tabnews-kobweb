@@ -62,13 +62,16 @@ fun StatusPage() {
   }
 	
   AsyncInterval(2.seconds) {
-    val status = fetchAPI("/api/v1/status")
-		
-    updatedAt = status?.getString("updated_at") ?: updatedAt
-    databaseVersion = status?.getNestedString("dependencies.database.version") ?: databaseVersion
-    databaseOpenedConnections =
-      status?.getNestedString("dependencies.database.opened_connections") ?: databaseOpenedConnections
-    databaseMaxConnections = status?.getNestedString("dependencies.database.max_connections") ?: databaseMaxConnections
+    fetchAPI("/api/v1/status")?.firstOrNull {
+      updatedAt = "updated_at".getString(orElse = updatedAt)
+      "dependencies".getJson {
+        "database".getJson {
+          databaseVersion = "version".getString(orElse = databaseVersion)
+          databaseOpenedConnections = "opened_connections".getString(orElse = databaseOpenedConnections)
+          databaseMaxConnections = "max_connections".getString(orElse = databaseMaxConnections)
+        }
+      }
+    }
   }
 }
 
