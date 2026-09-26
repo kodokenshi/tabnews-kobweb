@@ -1,6 +1,6 @@
 package me.kodokenshi.tabnewskobweb.database.migrations
 
-import me.kodokenshi.tabnewskobweb.json.buildJson
+import me.kodokenshi.tabnewskobweb.json.jsonBuild
 
 data class MigrationFile(
   val version: Long,
@@ -10,9 +10,9 @@ data class MigrationFile(
   val checksum: String,
 ) {
   fun toInfoJson() =
-    buildJson {
-      put("version", version)
-      put("author", author)
-      put("description", description)
+    jsonBuild {
+      "version" eq version
+      "author" eq author
+      "description" eq description
     }
 }

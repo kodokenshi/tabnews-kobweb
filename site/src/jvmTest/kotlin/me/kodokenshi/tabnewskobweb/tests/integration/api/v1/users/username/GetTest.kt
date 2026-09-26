@@ -2,15 +2,11 @@ package me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integratio
 
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import me.kodokenshi.tabnewskobweb.json.parseJson
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.clearDatabase
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.database.waitForMigrations
+import me.kodokenshi.tabnewskobweb.json.json
+import me.kodokenshi.tabnewskobweb.json.jsonBuild
+import me.kodokenshi.tabnewskobweb.json.toJsonOrNull
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.Orchestrator
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.testContext
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.createUser
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.extractUuidVersion
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.findUser
-import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.users.parsePostgresTimestamp
-import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toNotBeNull
 import org.junit.jupiter.api.Test
@@ -20,65 +16,68 @@ class GetTest {
   suspend fun test() =
     testContext(this::class) {
       beforeAll {
-        waitForAllServices()
-        clearDatabase()
-        waitForMigrations()
+        Orchestrator.waitForAllServices()
+        Orchestrator.clearDatabase()
+        Orchestrator.runPendingMigrations()
       }
       describe("GET /api/v1/users/[username]") {
         describe("Anonymous user") {
           describe("With exact case match") {
-            expect(
-              createUser(
-                username = "exactUser",
-                email = "exact.user@email.com",
-                password = "senha123",
-              ).status,
-            ).toBe(HttpStatusCode.Created)
+            Orchestrator.createUser(
+              json {
+                "username" eq "exactUser"
+                "email" eq "exact.user@email.com"
+                "passwd" eq "senha123"
+              },
+            )
 	
-            val response = findUser("exactUser")
+            val response = Orchestrator.findUserURL("exactUser")
             expect(response.status).toBe(HttpStatusCode.OK)
 	
-            val body = expect(response.bodyAsText().parseJson()).toNotBeNull()
-            expect(extractUuidVersion(body.getString("id"))).toBe(4)
+            val body = expect(response.bodyAsText().toJsonOrNull()).toNotBeNull()
+            expect(Orchestrator.extractUuidVersion(body.getString("id"))).toBe(4)
             expect(body.getString("username")).toBe("exactUser")
             expect(body.getString("email")).toBe("exact.user@email.com")
-            expect(parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
-            expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
+            expect(Orchestrator.parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
+            expect(Orchestrator.parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
           }
 	
           describe("With case mismatch") {
-            expect(
-              createUser(
-                username = "mismatchUser",
-                email = "mismatch.user@email.com",
-                password = "senha123",
-              ).status,
-            ).toBe(HttpStatusCode.Created)
+            Orchestrator.createUser(
+              json {
+                "username" eq "mismatchUser"
+                "email" eq "mismatch.user@email.com"
+                "passwd" eq "senha123"
+              },
+            )
 						
-            val response = findUser("MisMATCHusER")
+            val response = Orchestrator.findUserURL("MisMATCHusER")
             expect(response.status).toBe(HttpStatusCode.OK)
 	
-            val body = expect(response.bodyAsText().parseJson()).toNotBeNull()
-            expect(extractUuidVersion(body.getString("id"))).toBe(4)
+            val body = expect(response.bodyAsText().toJsonOrNull()).toNotBeNull()
+            expect(Orchestrator.extractUuidVersion(body.getString("id"))).toBe(4)
             expect(body.getString("username")).toBe("mismatchUser")
             expect(body.getString("email")).toBe("mismatch.user@email.com")
-            expect(parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
-            expect(parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
+            expect(Orchestrator.parsePostgresTimestamp(body.getString("created_at").orEmpty())).toNotBeNull()
+            expect(Orchestrator.parsePostgresTimestamp(body.getString("updated_at").orEmpty())).toNotBeNull()
           }
 	
           describe("With nonexistent 'username'") {
-            val response = findUser("nonexistentuser")
+            val response = Orchestrator.findUserURL("nonexistentuser")
             expect(response.status).toBe(HttpStatusCode.NotFound)
-	
-            val body = expect(response.bodyAsText().parseJson()).toNotBeNull()
-            expect(body.getString("name")).toBe("NotFoundError")
-            expect(body.getString("message")).toBe("O username informado não foi encontrado.")
-            expect(body.getString("action")).toBe("Verifique se o username está correto.")
-            expect(body.getInt("status_code")).toBe(HttpStatusCode.NotFound.value)
+
+            expect(response.bodyAsText()).toBe(
+              jsonBuild {
+                "name" eq "NotFoundError"
+                "message" eq "O username informado não foi encontrado."
+                "action" eq "Verifique se o username está correto."
+                "status_code" eq HttpStatusCode.NotFound.value
+              },
+            )
           }
 	
           describe("With invalid 'username'") {
-            val response = findUser("useruseruseruseruseruseruseruser")
+            val response = Orchestrator.findUserURL("useruseruseruseruseruseruseruser")
             expect(response.status).toBe(HttpStatusCode.BadRequest)
           }
         }

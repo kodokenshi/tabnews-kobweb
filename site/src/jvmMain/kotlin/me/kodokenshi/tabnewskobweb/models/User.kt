@@ -1,32 +1,30 @@
 package me.kodokenshi.tabnewskobweb.models
 
-import com.varabyte.kobweb.api.ApiContext
-import com.varabyte.kobweb.api.http.text
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 import me.kodokenshi.tabnewskobweb.database.Database
 import me.kodokenshi.tabnewskobweb.database.uuidColumn
 import me.kodokenshi.tabnewskobweb.database.varCharColumn
 import me.kodokenshi.tabnewskobweb.infra.NotFoundError
 import me.kodokenshi.tabnewskobweb.infra.ValidationError
-import me.kodokenshi.tabnewskobweb.json.Json
+import me.kodokenshi.tabnewskobweb.json.JsonReader
+import me.kodokenshi.tabnewskobweb.json.JsonWriter
 import me.kodokenshi.tabnewskobweb.json.json
-import me.kodokenshi.tabnewskobweb.json.parseJson
-import me.kodokenshi.tabnewskobweb.json.toJsonElement
 import org.intellij.lang.annotations.Language
 import org.jetbrains.exposed.v1.core.IColumnType
 import org.jetbrains.exposed.v1.core.statements.StatementType
+import java.sql.Timestamp
+import java.util.UUID
 
 object User {
-  fun findOneByUsername(username: String?): Json {
+  fun findOneByUsername(username: String?): JsonReader {
     validateUsername(username)
     val foundUser = runSelectUsernameQuery(username!!) // nesse ponto, não é nulo
     return foundUser
   }
 
-  suspend fun create(ctx: ApiContext): Json? {
-    val values =
-      ctx.req.body
-        ?.text()
-        ?.parseJson() ?: throw ValidationError()
+  fun create(values: JsonWriter?): JsonReader? {
+    values ?: throw ValidationError()
 
     hashPasswordInValues(values)
 
@@ -42,14 +40,11 @@ object User {
     return newUser
   }
 
-  suspend fun update(
+  fun update(
     username: String?,
-    ctx: ApiContext,
-  ): Json? {
-    val values =
-      ctx.req.body
-        ?.text()
-        ?.parseJson() ?: throw ValidationError()
+    values: JsonWriter?,
+  ): JsonReader? {
+    values ?: throw ValidationError()
 		
     val currentUser = findOneByUsername(username)
 
@@ -64,9 +59,11 @@ object User {
       hashPasswordInValues(values)
     }
 
-    val newUser = Json()
-    newUser.spread(currentUser)
-    newUser.spread(values)
+    val newUser =
+      json {
+        spread(currentUser)
+        spread(values)
+      }
 
     return runUpdateUserQuery(
       id = newUser.getString("id")!!,
@@ -76,13 +73,15 @@ object User {
     )
   }
 
-  private fun hashPasswordInValues(values: Json) {
-    val password = values.getString("passwd")
-		
-    validatePassword(password)
-		
-    val hashedPassword = Password.hash(password!!) // nesse ponto, não é nulo
-    values.put("passwd", hashedPassword)
+  private fun hashPasswordInValues(values: JsonWriter) {
+    values write {
+      val plainPassword = "passwd".getString()
+			
+      validatePassword(plainPassword)
+			
+      val hashedPassword = Password.hash(plainPassword!!) // nesse ponto, não é nulo
+      "passwd" eq hashedPassword
+    }
   }
 
   private fun validateUniqueUsername(username: String?) {
@@ -247,21 +246,36 @@ object User {
     @Language("sql") stmt: String,
     explicitStatementType: StatementType? = null,
     values: Iterable<Pair<IColumnType<*>, Any?>> = emptyList(),
-  ) = Database.transaction {
-    exec(
-      stmt = stmt,
-      explicitStatementType = explicitStatementType,
-      args = values,
-    ) {
-      json {
-        val metaData = it.metaData
-        val columnCount = metaData.columnCount
-        while (it.next()) {
-          repeat(columnCount) { index ->
-            put(it.metaData.getColumnName(index + 1), it.getObject(index + 1).toJsonElement())
+  ): JsonReader? =
+    Database.transaction {
+      exec(
+        stmt = stmt,
+        explicitStatementType = explicitStatementType,
+        args = values,
+      ) {
+        json {
+          val metaData = it.metaData
+          val columnCount = metaData.columnCount
+          while (it.next()) {
+            repeat(columnCount) { index ->
+              it.metaData.getColumnName(index + 1) eq
+                it.getObject(index + 1)
+            }
           }
         }
       }
     }
+
+  init {
+    JsonWriter.registerClassSerializer<UUID>(
+      isInstanceOf = { it is UUID },
+      toJsonElement = { JsonPrimitive(it.toString()) },
+      fromJsonElement = { UUID.fromString(it.jsonPrimitive.content) },
+    )
+    JsonWriter.registerClassSerializer<Timestamp>(
+      isInstanceOf = { it is Timestamp },
+      toJsonElement = { JsonPrimitive(it.toString()) },
+      fromJsonElement = { Timestamp.valueOf(it.jsonPrimitive.content) },
+    )
   }
 }

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "clean": "node gradlew.js clean --no-daemon",
     "dev": "node gradlew.js site:runDev --no-daemon",
     "dev:stop": "node gradlew.js site:stopDev --no-daemon",
     "test": "node gradlew.js site:tests --no-daemon",
@@ -13,6 +14,8 @@
     "services:up": "node gradlew.js site:servicesUp --no-daemon",
     "services:stop": "node gradlew.js site:servicesStop --no-daemon",
     "services:down": "node gradlew.js site:servicesDown --no-daemon",
+    "server:up:detached": "node gradlew.js site:kobwebStart --no-daemon",
+    "server:down": "node gradlew.js site:kobwebStop",
     "lint:style:check": "node gradlew.js site:sqllintCheck --no-daemon",
     "lint:code:check": "node gradlew.js site:detekt --no-daemon",
     "prepare": "husky",

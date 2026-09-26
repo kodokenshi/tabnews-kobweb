@@ -3,10 +3,11 @@ package me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integratio
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import me.kodokenshi.tabnewskobweb.json.parseJson
+import me.kodokenshi.tabnewskobweb.json.jsonBuild
+import me.kodokenshi.tabnewskobweb.json.toJsonOrNull
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.Orchestrator
+import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.client
 import me.kodokenshi.tabnewskobweb.me.kodokenshi.tabnewskobweb.tests.integration.api.v1.testContext
-import me.kodokenshi.tabnewskobweb.tests.services.client
-import me.kodokenshi.tabnewskobweb.tests.services.waitForAllServices
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toBe
 import me.kodokenshi.tabnewskobweb.tests.test.assertion.toNotBeNull
 import org.junit.jupiter.api.Test
@@ -17,7 +18,7 @@ class GetTest {
   suspend fun test() =
     testContext(this::class) {
       beforeAll {
-        waitForAllServices()
+        Orchestrator.waitForAllServices()
       }
       describe("GET /api/v1/status") {
         describe("Anonymous user") {
@@ -25,14 +26,20 @@ class GetTest {
             val response = client.get("http://localhost:8080/api/v1/status")
             expect(response.status).toBe(HttpStatusCode.OK)
 							
-            val body = expect(response.bodyAsText().parseJson()).toNotBeNull()
+            val body = expect(response.bodyAsText().toJsonOrNull()).toNotBeNull()
 							
             val updatedAt = expect(body.getString("updated_at")).toNotBeNull()
             expect(Instant.parseOrNull(updatedAt).toString()).toBe(updatedAt)
-							
-            expect(body.getNestedString("dependencies.database.version")).toBe("16.0")
-            expect(body.getNestedInt("dependencies.database.opened_connections")).toBe(1)
-            expect(body.getNestedInt("dependencies.database.max_connections")).toBe(100)
+
+            expect(body.getJson("dependencies")?.toString()).toBe(
+              jsonBuild {
+                "database" {
+                  "version" eq "16.0"
+                  "opened_connections" eq 1
+                  "max_connections" eq 100
+                }
+              },
+            )
           }
         }
       }
